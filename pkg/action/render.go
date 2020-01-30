@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 
-	"github.com/tstromberg/daily/pkg/tree"
 	"github.com/tstromberg/daily/pkg/tmpl"
+	"github.com/tstromberg/daily/pkg/parse"
 	"k8s.io/klog"
 )
 
@@ -18,7 +19,7 @@ var (
 )
 
 func Render(src string, dst string) ([]string, error) {
-	st, err := tree.Parse(src)
+	ps, err := parse.Root(src)
 	if err != nil {
 		return nil, fmt.Errorf("parse: %w", err)
 	}
@@ -30,7 +31,31 @@ func Render(src string, dst string) ([]string, error) {
 		return nil, fmt.Errorf("create: %w", err)
 	}
 	defer f.Close()
+
+	rps := []*RenderedPost{}
+	for _, p := range ps {
+		rp, err := renderPost(p, dst)
+		if err != nil {
+			klog.Errorf("renderPost(%+v): %v", p, err)
+			continue
+		}
+		rps = append(rps, rp)
+	}
+
+	st := &Stream{
+		Title:     "boring blog",
+		Timestamp: time.Now(),
+		Posts:     rps,
+	}
 	return []string{idx}, tmpl.Index.Execute(f, st)
+}
+
+func renderPost(p *parse.Post, dst string) (*RenderedPost, error) {
+	klog.Infof("render %+v to %s", p, dst)
+	if p.Kind == "jpeg" {
+		copy(p.Source, filepath.Join(dst, p.Hierarchy))
+	}
+	return &RenderedPost{Metadata: p}, nil
 }
 
 func generateThumbnails(path string) error {

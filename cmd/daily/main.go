@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"html/template"
 	"log"
 	"os"
 
@@ -11,8 +10,6 @@ import (
 )
 
 var (
-	thumbQuality = 85
-	indexTmpl    = template.Must(template.ParseFiles("index.tmpl"))
 	rootFlag     string
 )
 
@@ -31,6 +28,7 @@ func main() {
 	flag.Set("alsologtostderr", "true")
 	flag.Parse()
 
+	
 	app := &cli.App{
 		Name:  "daily",
 		Usage: "daily mogger",
@@ -51,6 +49,12 @@ func main() {
 				Action:  func(c *cli.Context) error {
 					return addCmd(c)
 				},
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "description",
+						Value: "",
+					},
+				}
 			},
 			{
 				Name:    "render",

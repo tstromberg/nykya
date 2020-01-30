@@ -1,4 +1,4 @@
-package tree
+package parse
 
 import (
 	"fmt"
@@ -9,12 +9,11 @@ import (
 	"k8s.io/klog"
 )
 
-
 func init() {
 	exif.RegisterParsers(mknote.All...)
 }
 
-func parseJPEG(path string) (*Post, error) {
+func fromJPEG(path string) (*Post, error) {
 	klog.Infof("jpeg: %s", path)
 	f, err := os.Open(path)
 	if err != nil {
@@ -31,9 +30,10 @@ func parseJPEG(path string) (*Post, error) {
 	if err != nil {
 		klog.Errorf("datetime(%s): %v", path, err)
 	}
-	return &Post {
-		Timestamp: t,
-		Kind: "jpeg",
-		Source: path,
+	return &Post{
+		Timestamp:   t,
+		Kind:        "jpeg",
+		Source:      path,
+		Description: "Just another day in paradise",
 	}, nil
 }
