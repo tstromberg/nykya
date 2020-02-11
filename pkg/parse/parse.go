@@ -43,12 +43,12 @@ func fromDirectory(path string, root string) ([]*Post, error) {
 			klog.Warningf("unable to parse %s: %v", fp, err)
 			continue
 		}
-		if p.Hierarchy == "" {
+		if p.Hier == "" {
 			rel, err := filepath.Rel(filepath.Dir(path), root)
 			if err != nil {
 				return ps, fmt.Errorf("relpath: %w", err)
 			}
-			p.Hierarchy = rel
+			p.Hier = rel
 		}
 		ps = append(ps, p)
 	}

@@ -2,24 +2,24 @@ package main
 
 import (
 	"flag"
-	"log"
-	"os"
+	"fmt"
 
-	"github.com/urfave/cli/v2"
+	"github.com/alecthomas/kong"
 	"k8s.io/klog"
 )
 
-var (
-	rootFlag     string
-)
-
-type Post struct {
-	Image string
+type addOpts struct {
+	Description string   `help:"Set a description for the post"`
+	Paths       []string `arg:"" optional:"" help:"Paths to add." type:"path"`
 }
 
-type Page struct {
-	Title string
-	Posts []*Post
+type renderOpts struct {
+}
+
+var cli struct {
+	Root   string     `help:"Set the debug directory"`
+	Add    addOpts    `cmd:"" help:"Add files."`
+	Render renderOpts `cmd:"" help:"Render output."`
 }
 
 func main() {
@@ -28,47 +28,22 @@ func main() {
 	flag.Set("alsologtostderr", "true")
 	flag.Parse()
 
-	
-	app := &cli.App{
-		Name:  "daily",
-		Usage: "daily mogger",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "root",
-				Value:       ".",
-				Usage:       "root directory to search for data",
-				Destination: &rootFlag,
-			},
-		},
-
-		Commands: []*cli.Command{
-			{
-				Name:    "add",
-				Aliases: []string{"a"},
-				Usage:   "add a post",
-				Action:  func(c *cli.Context) error {
-					return addCmd(c)
-				},
-				Flags: []cli.Flag{
-					cli.StringFlag{
-						Name:  "description",
-						Value: "",
-					},
-				}
-			},
-			{
-				Name:    "render",
-				Aliases: []string{"r"},
-				Usage:   "render posts",
-				Action: func(c *cli.Context) error {
-					return renderCmd(c)
-				},
-			},
-		},
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
+	ctx := kong.Parse(&cli,
+		kong.Name("daily"),
+		kong.Description("daily mogger."),
+		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+			Summary: true,
+		}))
+	switch ctx.Command() {
+	case "add":
+		addWithoutPath(cli.Root, cli.Add)
+	case "add <paths>":
+		addPaths(cli.Root, cli.Add)
+	case "render":
+		renderCmd(cli.Root)
+	default:
+		fmt.Printf("unknown command: %q\n", ctx.Command())
 	}
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 
-	"github.com/tstromberg/daily/pkg/tmpl"
 	"github.com/tstromberg/daily/pkg/parse"
+	"github.com/tstromberg/daily/pkg/tmpl"
 	"k8s.io/klog"
 )
 
@@ -18,6 +18,7 @@ var (
 	thumbQuality = 85
 )
 
+// Render takes an input subdirectory of objects and generates static output within another directory
 func Render(src string, dst string) ([]string, error) {
 	ps, err := parse.Root(src)
 	if err != nil {
@@ -53,7 +54,7 @@ func Render(src string, dst string) ([]string, error) {
 func renderPost(p *parse.Post, dst string) (*RenderedPost, error) {
 	klog.Infof("render %+v to %s", p, dst)
 	if p.Kind == "jpeg" {
-		copy(p.Source, filepath.Join(dst, p.Hierarchy))
+		copyFile(p.Source, filepath.Join(dst, p.Hier))
 	}
 	return &RenderedPost{Metadata: p}, nil
 }

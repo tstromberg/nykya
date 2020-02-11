@@ -1,16 +1,15 @@
 package main
 
 import (
+	"path/filepath"
+
 	"github.com/tstromberg/daily/pkg/action"
-	
-	"github.com/urfave/cli/v2"
 	"k8s.io/klog"
 )
 
-func renderCmd(c *cli.Context) error {
-	src := c.Args().Get(0)
-	// TODO: get from YAML
-	dst := c.Args().Get(1)
+func renderCmd(root string) error {
+	src := filepath.Join(root, "in")
+	dst := filepath.Join(root, "out")
 	paths, err := action.Render(src, dst)
 	if err != nil {
 		return err

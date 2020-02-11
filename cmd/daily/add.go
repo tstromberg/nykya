@@ -2,15 +2,24 @@ package main
 
 import (
 	"github.com/tstromberg/daily/pkg/action"
-
-	"github.com/urfave/cli/v2"
 )
 
-func addCmd(c *cli.Context) error {
-	path := c.Args().Get(0)
-
-	return action.Add(path, rootFlag, action.AddOptions{
-		Root:        c.String("root"),
-		Description: c.String("description"),
+func addWithoutPath(root string, opts addOpts) error {
+	return action.Add("", action.AddOptions{
+		Root:        root,
+		Description: opts.Description,
 	})
+}
+
+func addPaths(root string, opts addOpts) error {
+	for _, p := range opts.Paths {
+		err := action.Add(p, action.AddOptions{
+			Root:        root,
+			Description: opts.Description,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

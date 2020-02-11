@@ -6,6 +6,7 @@ import (
 	"github.com/tstromberg/daily/pkg/parse"
 )
 
+// Stream is basically the entire blog.
 type Stream struct {
 	Posts []*RenderedPost
 	Title string
@@ -18,5 +19,5 @@ type RenderedPost struct {
 	Metadata *parse.Post
 
 	ImageSrc string
-	URL string
+	URL      string
 }

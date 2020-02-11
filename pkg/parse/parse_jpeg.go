@@ -31,9 +31,9 @@ func fromJPEG(path string) (*Post, error) {
 		klog.Errorf("datetime(%s): %v", path, err)
 	}
 	return &Post{
-		Timestamp:   t,
 		Kind:        "jpeg",
 		Source:      path,
+		Created:     t,
 		Description: "Just another day in paradise",
 	}, nil
 }

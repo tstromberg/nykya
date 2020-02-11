@@ -1,0 +1,10 @@
+kind: SiteConfig
+version: 0
+
+site:
+  title: Just something a little funny
+  author: Thomas
+
+directories:
+  in: in/
+  out: out/

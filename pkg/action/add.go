@@ -2,49 +2,98 @@ package action
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/tstromberg/daily/pkg/parse"
 	"k8s.io/klog"
 )
 
+// AddOptions are options that can be passed to the add command
 type AddOptions struct {
+	Root        string
 	Description string
 	Timestamp   time.Time
 }
 
-// defaultHierarchy returns an unconfigured hierarchy. Deal with it.
-func defaultHierarchy() {
-	y, m, d := ts.Date()
-	return fmt.Sprintf("%y-%m-%d", y, m, d)
-}
-
-func Add(path string, root string, opts AddOptions) error {
+// Add an object from a path
+func Add(path string, opts AddOptions) error {
 	ts := opts.Timestamp
 	if ts.IsZero() {
 		ts = time.Now()
 	}
-	klog.Infof("adding %s to %s, ts=%s opts=%+v", path, root, ts, opts)
+	klog.Infof("adding %s to %s, ts=%s opts=%+v", path, opts.Root, ts, opts)
 
 	if path == "note" {
-		return addNote(root, opts)
+		return addNote(opts)
 	}
 
-	if _, err := url.Parse(s); err == nil {
-		return addURL(path, root, opts)
+	if _, err := url.Parse(path); err == nil {
+		return addURL(path, opts)
 	}
 
 	if _, err := os.Stat(path); err == nil {
-		return addFile(path, root, opts)
+		return addFile(path, opts)
 	}
+	return nil
 }
 
-func addNote()
-
-func addURL() {
-	u, err := url.Parse(s)
-	if err != nil {
-		panic(err)
+// addNote is for adding notes
+func addNote(opts AddOptions) error {
+	klog.Infof("addNote: %+v", opts)
+	p := parse.Post{
+		Description: opts.Description,
 	}
+	_ = guessDestination(opts.Root, p, opts)
+	return nil
+}
+
+// addURL is for adding URL's
+func addURL(path string, opts AddOptions) error {
+	klog.Infof("addURL: %s - %+v", path, opts)
+	_, err := url.Parse(path)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// addFile is for adding a local file
+func addFile(path string, opts AddOptions) error {
+	klog.Infof("addFile: %s - %+v", path, opts)
+	return nil
+}
+
+// defaultHierarchy returns an unconfigured hierarchy. Deal with it.
+func defaultHierarchy(t time.Time) string {
+	y, m, d := t.Date()
+	return fmt.Sprintf("%d-%d-%d", y, m, d)
+}
+
+// guessDestination picks the local destination of the file
+func guessDestination(root string, p parse.Post, opts AddOptions) string {
+	return filepath.Join(root, defaultHierarchy(p.Posted), filepath.Base(p.Source))
+}
+
+// copyFile copies a file.
+func copyFile(src string, dst string) error {
+	klog.Infof("copying %s -> %s", src, dst)
+	s, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("open: %w", err)
+	}
+	defer s.Close()
+
+	d, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("create: %w", err)
+	}
+
+	if _, err := io.Copy(d, s); err != nil {
+		return fmt.Errorf("copy: %w", err)
+	}
+	return d.Close()
 }
