@@ -6,9 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/anthonynsimon/bild/imgio"
-	"github.com/anthonynsimon/bild/transform"
-
 	"github.com/tstromberg/daily/pkg/parse"
 	"github.com/tstromberg/daily/pkg/tmpl"
 	"k8s.io/klog"
@@ -53,23 +50,9 @@ func Render(src string, dst string) ([]string, error) {
 
 func renderPost(p *parse.Post, dst string) (*RenderedPost, error) {
 	klog.Infof("render %+v to %s", p, dst)
+	var err error
 	if p.Kind == "jpeg" {
-		copyFile(p.Source, filepath.Join(dst, p.Hier))
+		return renderJPEG(p, dst)
 	}
-	return &RenderedPost{Metadata: p}, nil
-}
-
-func generateThumbnails(path string) error {
-	img, err := imgio.Open(path)
-	if err != nil {
-		return fmt.Errorf("open: %w", err)
-	}
-
-	thumb := transform.Resize(img, 800, 800, transform.Linear)
-	klog.Infof("writing to output.jpg")
-
-	if err := imgio.Save("output.jpg", thumb, imgio.JPEGEncoder(thumbQuality)); err != nil {
-		return fmt.Errorf("save: %w", err)
-	}
-	return nil
+	return &RenderedPost{Metadata: p}, err
 }

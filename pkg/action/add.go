@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -76,24 +75,4 @@ func defaultHierarchy(t time.Time) string {
 // guessDestination picks the local destination of the file
 func guessDestination(root string, p parse.Post, opts AddOptions) string {
 	return filepath.Join(root, defaultHierarchy(p.Posted), filepath.Base(p.Source))
-}
-
-// copyFile copies a file.
-func copyFile(src string, dst string) error {
-	klog.Infof("copying %s -> %s", src, dst)
-	s, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("open: %w", err)
-	}
-	defer s.Close()
-
-	d, err := os.Create(dst)
-	if err != nil {
-		return fmt.Errorf("create: %w", err)
-	}
-
-	if _, err := io.Copy(d, s); err != nil {
-		return fmt.Errorf("copy: %w", err)
-	}
-	return d.Close()
 }
