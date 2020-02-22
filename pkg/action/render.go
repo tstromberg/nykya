@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tstromberg/daily/pkg/daily"
 	"github.com/tstromberg/daily/pkg/parse"
 	"github.com/tstromberg/daily/pkg/tmpl"
 	"k8s.io/klog"
@@ -16,14 +17,12 @@ var (
 )
 
 // Render takes an input subdirectory of objects and generates static output within another directory
-func Render(src string, dst string) ([]string, error) {
-	ps, err := parse.Root(src)
+func Render(dc daily.Config) ([]string, error) {
+	ps, err := parse.Root(dc.In)
 	if err != nil {
 		return nil, fmt.Errorf("parse: %w", err)
 	}
-	klog.Infof("rendering %q to %q", src, dst)
-
-	idx := filepath.Join(dst, "index.html")
+	idx := filepath.Join(dc.Out, "index.html")
 	f, err := os.Create(idx)
 	if err != nil {
 		return nil, fmt.Errorf("create: %w", err)
@@ -32,7 +31,7 @@ func Render(src string, dst string) ([]string, error) {
 
 	rps := []*RenderedPost{}
 	for _, p := range ps {
-		rp, err := renderPost(p, dst)
+		rp, err := renderPost(p, dc.Out)
 		if err != nil {
 			klog.Errorf("renderPost(%+v): %v", p, err)
 			continue

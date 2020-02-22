@@ -16,10 +16,15 @@ type addOpts struct {
 type renderOpts struct {
 }
 
+type devOpts struct {
+	Port int `help:"Set a port TCP number"`
+}
+
 var cli struct {
 	Root   string     `help:"Set the debug directory"`
 	Add    addOpts    `cmd:"" help:"Add files."`
 	Render renderOpts `cmd:"" help:"Render output."`
+	Dev    devOpts    `cmd:"" help:"Developer mode"`
 }
 
 func main() {
@@ -43,6 +48,8 @@ func main() {
 		addPaths(cli.Root, cli.Add)
 	case "render":
 		renderCmd(cli.Root)
+	case "dev":
+		devCmd(cli.Root, cli.Dev.Port)
 	default:
 		fmt.Printf("unknown command: %q\n", ctx.Command())
 	}

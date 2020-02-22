@@ -20,4 +20,6 @@ type RenderedPost struct {
 
 	ImageSrc string
 	URL      string
+
+	Thumbnails map[string]ThumbOpts
 }
