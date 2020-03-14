@@ -22,7 +22,7 @@ func (a *AddCmd) Run(globals *Globals) error {
 	}
 
 	return action.Add(context.Background(), dc, action.AddOptions{
-		Text:      a.Content,
+		Content:   a.Content,
 		Root:      globals.Root,
 		Title:     a.Title,
 		Kind:      a.Kind,

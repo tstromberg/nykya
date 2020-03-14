@@ -6,6 +6,9 @@ import (
 
 // Item is a post
 type Item struct {
+	// inline content
+	content string
+
 	// Kind is what kind of post this is. See ValidKinds (required)
 	Kind string
 
@@ -15,11 +18,6 @@ type Item struct {
 	Posted *time.Time
 	// When was the content last updated
 	Updated *time.Time
-
-	// Depending on the kind, one of these will host the primary content of the post (required)
-	Text string `yaml:",omitempty"`
-	Data []byte `yaml:",omitempty"`
-	URL  string `yaml:",omitempty"`
 
 	// Title is a title of this post. (optional)
 	Title string `yaml:",omitempty"`
@@ -38,4 +36,12 @@ type Item struct {
 
 	// Source is where the post content originated from
 	Source string `yaml:",omitempty"`
+}
+
+func (i *Item) Content() string {
+	return i.content
+}
+
+func (i *Item) SetContent(s string) {
+	i.content = s
 }

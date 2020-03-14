@@ -18,7 +18,7 @@ var (
 	thumbQuality = 85
 )
 
-// Render takes an input subdirectory of objects and generates static output within another directory
+// Render scans the site input directory and generates static output to the site output directory
 func Render(ctx context.Context, dc daily.Config) ([]string, error) {
 	items, err := parse.Scan(ctx, dc.In)
 	if err != nil {

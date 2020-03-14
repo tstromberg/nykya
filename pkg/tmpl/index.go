@@ -17,7 +17,7 @@ var Index = template.Must(template.New("index").Parse(`<!DOCTYPE html>
    </header>
    <div itemprop="articleBody">
    {{ if .ImageSrc }}<img src="{{ .ImageSrc }}" />{{ end }}
-   {{ if .Item.Text }}<p>{{ .Item.Text }}</p>{{ end }}
+   {{ if .Item.Content }}<p>{{ .Item.Content }}</p>{{ end }}
    </div>
    <footer>
     <p>Posted <time itemprop="datePublished" datetime="2009-10-10">Thursday</time>.</p>

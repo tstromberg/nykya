@@ -3,7 +3,6 @@ package action
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,9 +18,9 @@ import (
 type AddOptions struct {
 	Root string
 
-	Title string
-	Text  string
-	Kind  string
+	Title   string
+	Content string
+	Kind    string
 
 	Timestamp time.Time
 }
@@ -32,7 +31,7 @@ func Add(ctx context.Context, dc daily.Config, opts AddOptions) error {
 	if ts.IsZero() {
 		ts = time.Now()
 	}
-	klog.Infof("adding %q to %s, ts=%s opts=%+v", opts.Text, opts.Root, ts, opts)
+	klog.Infof("adding %q to %s, ts=%s opts=%+v", opts.Content, opts.Root, ts, opts)
 
 	switch opts.Kind {
 	case "thought":
@@ -46,17 +45,17 @@ func Add(ctx context.Context, dc daily.Config, opts AddOptions) error {
 func addThought(ctx context.Context, dc daily.Config, opts AddOptions) error {
 	klog.Infof("addNote %+v", opts)
 
-	words := strings.Split(opts.Text, " ")
+	words := strings.Split(opts.Content, " ")
 	slug := strings.Join(words[0:3], "-")
 
 	i := daily.Item{
 		Kind:    opts.Kind,
-		Text:    opts.Text,
 		Posted:  &opts.Timestamp,
 		Created: &opts.Timestamp,
 		Updated: &opts.Timestamp,
 		Slug:    slug,
 	}
+	i.SetContent(opts.Content)
 
 	i.Hier = calculateHierarchy(dc, i)
 	return saveItem(ctx, dc, i)
@@ -82,7 +81,12 @@ func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
 	}
 
 	fmt.Printf("Writing to %s ...", path)
-	return ioutil.WriteFile(path, b, 0600)
+	f, err := os.Create(path)
+	defer f.Close()
+	f.Write(b)
+	f.WriteString(daily.DocumentSeparator)
+	_, err = f.WriteString(i.Content())
+	return err
 }
 
 func itemPath(dc daily.Config, i daily.Item) string {
