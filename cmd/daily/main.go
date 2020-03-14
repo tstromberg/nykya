@@ -2,29 +2,21 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/alecthomas/kong"
 	"k8s.io/klog"
 )
 
-type addOpts struct {
-	Description string   `help:"Set a description for the post"`
-	Paths       []string `arg:"" optional:"" help:"Paths to add." type:"path"`
+type Globals struct {
+	Root string `help:"Set the debug directory"`
 }
 
-type renderOpts struct {
-}
+type CLI struct {
+	Globals
 
-type devOpts struct {
-	Port int `help:"Set a port TCP number"`
-}
-
-var cli struct {
-	Root   string     `help:"Set the debug directory"`
-	Add    addOpts    `cmd:"" help:"Add files."`
-	Render renderOpts `cmd:"" help:"Render output."`
-	Dev    devOpts    `cmd:"" help:"Developer mode"`
+	Add    AddCmd    `cmd:"" help:"Add files."`
+	Render RenderCmd `cmd:"" help:"Render output."`
+	Dev    DevCmd    `cmd:"" help:"Developer mode"`
 }
 
 func main() {
@@ -33,6 +25,7 @@ func main() {
 	flag.Set("alsologtostderr", "true")
 	flag.Parse()
 
+	cli := CLI{}
 	ctx := kong.Parse(&cli,
 		kong.Name("daily"),
 		kong.Description("daily mogger."),
@@ -41,16 +34,7 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
-	switch ctx.Command() {
-	case "add":
-		addWithoutPath(cli.Root, cli.Add)
-	case "add <paths>":
-		addPaths(cli.Root, cli.Add)
-	case "render":
-		renderCmd(cli.Root)
-	case "dev":
-		devCmd(cli.Root, cli.Dev.Port)
-	default:
-		fmt.Printf("unknown command: %q\n", ctx.Command())
-	}
+
+	err := ctx.Run(&cli.Globals)
+	ctx.FatalIfErrorf(err)
 }

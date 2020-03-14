@@ -3,7 +3,7 @@ package action
 import (
 	"time"
 
-	"github.com/tstromberg/daily/pkg/parse"
+	"github.com/tstromberg/daily/pkg/daily"
 )
 
 // Stream is basically the entire blog.
@@ -16,7 +16,7 @@ type Stream struct {
 
 // RenderedPost is a post along with any dynamically generated data we found
 type RenderedPost struct {
-	Metadata *parse.Post
+	Metadata *daily.Item
 
 	ImageSrc string
 	URL      string

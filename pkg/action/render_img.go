@@ -6,8 +6,8 @@ import (
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
+	"github.com/tstromberg/daily/pkg/daily"
 	"github.com/tstromberg/daily/pkg/fs"
-	"github.com/tstromberg/daily/pkg/parse"
 	"k8s.io/klog"
 )
 
@@ -24,7 +24,7 @@ var defaultThumbOpts = []ThumbOpts{
 	{X: 1920, Y: 1080, Quality: 85},
 }
 
-func renderJPEG(p *parse.Post, destRoot string) (*RenderedPost, error) {
+func renderJPEG(p *daily.Item, destRoot string) (*RenderedPost, error) {
 	rp := &RenderedPost{
 		Metadata:   p,
 		Thumbnails: map[string]ThumbOpts{},

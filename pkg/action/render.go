@@ -9,6 +9,7 @@ import (
 	"github.com/tstromberg/daily/pkg/daily"
 	"github.com/tstromberg/daily/pkg/parse"
 	"github.com/tstromberg/daily/pkg/tmpl"
+
 	"k8s.io/klog"
 )
 
@@ -47,7 +48,7 @@ func Render(dc daily.Config) ([]string, error) {
 	return []string{idx}, tmpl.Index.Execute(f, st)
 }
 
-func renderPost(p *parse.Post, dst string) (*RenderedPost, error) {
+func renderPost(p *daily.Item, dst string) (*RenderedPost, error) {
 	klog.Infof("render %+v to %s", p, dst)
 	var err error
 	if p.Kind == "jpeg" {

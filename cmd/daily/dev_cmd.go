@@ -10,6 +10,10 @@ import (
 	"k8s.io/klog"
 )
 
+type DevCmd struct {
+	Port int `help:"Set a port TCP number"`
+}
+
 func renderLoop(dc daily.Config) {
 	klog.Infof("starting render loop ...")
 	c := make(chan notify.EventInfo, 1)
@@ -28,15 +32,20 @@ func renderLoop(dc daily.Config) {
 	}
 }
 
-func devCmd(root string, port int) {
-	dc := daily.ConfigFromRoot(root)
-	_, err := action.Render(dc)
+func (c *DevCmd) Run(globals *Globals) error {
+	dc, err := daily.ConfigFromRoot(globals.Root)
 	if err != nil {
-		klog.Fatalf("render: %v", err)
+		return fmt.Errorf("config from root: %w", err)
 	}
+	paths, err := action.Render(dc)
+	if err != nil {
+		return fmt.Errorf("render: %w", err)
+	}
+	klog.Infof("rendered: %v", paths)
 
-	klog.Infof("Starting up server on port %d ...", port)
+	klog.Infof("Starting up server on port %d ...", c.Port)
 	fs := http.FileServer(http.Dir(dc.Out))
 	http.Handle("/", fs)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", c.Port), nil)
+	return nil
 }

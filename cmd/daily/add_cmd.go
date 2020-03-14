@@ -1,25 +1,31 @@
 package main
 
 import (
+	"context"
+	"time"
+
 	"github.com/tstromberg/daily/pkg/action"
+	"github.com/tstromberg/daily/pkg/daily"
 )
 
-func addWithoutPath(root string, opts addOpts) error {
-	return action.Add("", action.AddOptions{
-		Root:        root,
-		Description: opts.Description,
-	})
+type AddCmd struct {
+	Kind    string `arg required help:"Type of object to add"`
+	Content string `arg required help:"Content to add"`
+
+	Title string `help:"Set a title for the post"`
 }
 
-func addPaths(root string, opts addOpts) error {
-	for _, p := range opts.Paths {
-		err := action.Add(p, action.AddOptions{
-			Root:        root,
-			Description: opts.Description,
-		})
-		if err != nil {
-			return err
-		}
+func (a *AddCmd) Run(globals *Globals) error {
+	dc, err := daily.ConfigFromRoot(globals.Root)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	return action.Add(context.Background(), dc, action.AddOptions{
+		Text:      a.Content,
+		Root:      globals.Root,
+		Title:     a.Title,
+		Kind:      a.Kind,
+		Timestamp: time.Now(),
+	})
 }

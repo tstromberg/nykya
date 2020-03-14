@@ -7,16 +7,18 @@ import (
 	"strings"
 
 	"k8s.io/klog"
+
+	"github.com/tstromberg/daily/pkg/daily"
 )
 
-func Root(root string) ([]*Post, error) {
+func Root(root string) ([]*daily.Item, error) {
 	klog.Infof("Parsing %s ...", root)
 
 	fs, err := ioutil.ReadDir(root)
 	if err != nil {
 		return nil, fmt.Errorf("readdir: %w", err)
 	}
-	var ps []*Post
+	var ps []*daily.Item
 
 	for _, f := range fs {
 		klog.Infof("found %s", f.Name())
@@ -29,12 +31,12 @@ func Root(root string) ([]*Post, error) {
 	return ps, nil
 }
 
-func fromDirectory(path string, root string) ([]*Post, error) {
+func fromDirectory(path string, root string) ([]*daily.Item, error) {
 	fs, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("readdir: %w", err)
 	}
-	var ps []*Post
+	var ps []*daily.Item
 	for _, f := range fs {
 		klog.Infof("found %s", f.Name())
 		fp := filepath.Join(path, f.Name())
@@ -55,7 +57,7 @@ func fromDirectory(path string, root string) ([]*Post, error) {
 	return ps, nil
 }
 
-func fromFile(path string) (*Post, error) {
+func fromFile(path string) (*daily.Item, error) {
 	klog.Infof("parsing: %v", path)
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
