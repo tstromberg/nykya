@@ -16,7 +16,7 @@ type Stream struct {
 
 // RenderedPost is a post along with any dynamically generated data we found
 type RenderedPost struct {
-	Metadata *daily.Item
+	Item *daily.Item
 
 	ImageSrc string
 	URL      string

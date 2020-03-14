@@ -24,21 +24,21 @@ var defaultThumbOpts = []ThumbOpts{
 	{X: 1920, Y: 1080, Quality: 85},
 }
 
-func renderJPEG(p *daily.Item, destRoot string) (*RenderedPost, error) {
+func renderJPEG(i *daily.Item, destRoot string) (*RenderedPost, error) {
 	rp := &RenderedPost{
-		Metadata:   p,
+		Item:       i,
 		Thumbnails: map[string]ThumbOpts{},
 	}
 
-	dest := filepath.Join(destRoot, p.Hier, filepath.Base(p.Source))
-	err := fs.Copy(p.Source, dest)
+	dest := filepath.Join(destRoot, i.Hier, filepath.Base(i.Source))
+	err := fs.Copy(i.Source, dest)
 	if err != nil {
 		return rp, err
 	}
 
-	thumbDir := filepath.Join(destRoot, p.Hier, ".t")
+	thumbDir := filepath.Join(destRoot, i.Hier, ".t")
 	for _, t := range defaultThumbOpts {
-		out, err := generateThumbnail(p.Source, thumbDir, t)
+		out, err := generateThumbnail(i.Source, thumbDir, t)
 		if err != nil {
 			return rp, err
 		}

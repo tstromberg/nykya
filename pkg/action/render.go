@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,8 +19,8 @@ var (
 )
 
 // Render takes an input subdirectory of objects and generates static output within another directory
-func Render(dc daily.Config) ([]string, error) {
-	ps, err := parse.Root(dc.In)
+func Render(ctx context.Context, dc daily.Config) ([]string, error) {
+	items, err := parse.Scan(ctx, dc.In)
 	if err != nil {
 		return nil, fmt.Errorf("parse: %w", err)
 	}
@@ -31,10 +32,10 @@ func Render(dc daily.Config) ([]string, error) {
 	defer f.Close()
 
 	rps := []*RenderedPost{}
-	for _, p := range ps {
-		rp, err := renderPost(p, dc.Out)
+	for _, i := range items {
+		rp, err := renderItem(ctx, i, dc.Out)
 		if err != nil {
-			klog.Errorf("renderPost(%+v): %v", p, err)
+			klog.Errorf("renderPost(%+v): %v", i, err)
 			continue
 		}
 		rps = append(rps, rp)
@@ -48,11 +49,11 @@ func Render(dc daily.Config) ([]string, error) {
 	return []string{idx}, tmpl.Index.Execute(f, st)
 }
 
-func renderPost(p *daily.Item, dst string) (*RenderedPost, error) {
-	klog.Infof("render %+v to %s", p, dst)
+func renderItem(ctx context.Context, i *daily.Item, dst string) (*RenderedPost, error) {
+	klog.Infof("render %+v to %s", i, dst)
 	var err error
-	if p.Kind == "jpeg" {
-		return renderJPEG(p, dst)
+	if i.Kind == "jpeg" {
+		return renderJPEG(i, dst)
 	}
-	return &RenderedPost{Metadata: p}, err
+	return &RenderedPost{Item: i}, err
 }

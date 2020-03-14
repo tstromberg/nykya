@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -14,7 +15,7 @@ type DevCmd struct {
 	Port int `help:"Set a port TCP number"`
 }
 
-func renderLoop(dc daily.Config) {
+func renderLoop(ctx context.Context, dc daily.Config) {
 	klog.Infof("starting render loop ...")
 	c := make(chan notify.EventInfo, 1)
 	if err := notify.Watch(dc.In, c, notify.Remove); err != nil {
@@ -25,7 +26,7 @@ func renderLoop(dc daily.Config) {
 	for {
 		ei := <-c
 		klog.Infof("Got event:", ei)
-		_, err := action.Render(dc)
+		_, err := action.Render(ctx, dc)
 		if err != nil {
 			klog.Fatalf("render: %v", err)
 		}
@@ -37,7 +38,9 @@ func (c *DevCmd) Run(globals *Globals) error {
 	if err != nil {
 		return fmt.Errorf("config from root: %w", err)
 	}
-	paths, err := action.Render(dc)
+
+	ctx := context.Background()
+	paths, err := action.Render(ctx, dc)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}

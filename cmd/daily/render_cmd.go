@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/tstromberg/daily/pkg/action"
@@ -8,18 +9,17 @@ import (
 	"k8s.io/klog"
 )
 
-//
 type RenderCmd struct{}
 
-func renderCmd(root string) error {
-	dc, err := daily.ConfigFromRoot(root)
+func (c *RenderCmd) Run(globals *Globals) error {
+	dc, err := daily.ConfigFromRoot(globals.Root)
 	if err != nil {
 		return fmt.Errorf("config from root: %w", err)
 	}
-	paths, err := action.Render(dc)
+	paths, err := action.Render(context.Background(), dc)
 	if err != nil {
-		return err
+		return fmt.Errorf("render: %w", err)
 	}
-	klog.Infof("rendered %d paths in %s", len(paths), dc.Out)
+	klog.Infof("rendered paths: %v", paths)
 	return nil
 }
