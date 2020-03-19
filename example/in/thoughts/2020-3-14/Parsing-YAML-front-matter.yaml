@@ -1,0 +1,9 @@
+kind: thought
+created: {}
+posted: {}
+updated: {}
+slug: Parsing-YAML-front-matter
+hier: thoughts/2020-3-14
+
+---
+Parsing YAML front-matter in Go lang feels awkward.

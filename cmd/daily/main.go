@@ -15,9 +15,9 @@ type Globals struct {
 // CLI defines the subcommands and flags supported
 type CLI struct {
 	Globals
-	Add    AddCmd    `cmd:"" help:"Add content"`
-	Render RenderCmd `cmd:"" help:"Render output to a static directory"`
-	Dev    DevCmd    `cmd:"" help:"Developer mode: local webserver with instant rendering"`
+	Add    addCmd    `cmd:"" help:"Add content"`
+	Render renderCmd `cmd:"" help:"Render output to a static directory"`
+	Dev    devCmd    `cmd:"" help:"Developer mode: local webserver with instant rendering"`
 }
 
 func main() {

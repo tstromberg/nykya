@@ -4,19 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tstromberg/daily/pkg/action"
 	"github.com/tstromberg/daily/pkg/daily"
+	"github.com/tstromberg/daily/pkg/render"
+	"github.com/tstromberg/daily/pkg/store"
 	"k8s.io/klog"
 )
 
-type RenderCmd struct{}
+type renderCmd struct{}
 
-func (c *RenderCmd) Run(globals *Globals) error {
+func (c *renderCmd) Run(globals *Globals) error {
 	dc, err := daily.ConfigFromRoot(globals.Root)
 	if err != nil {
 		return fmt.Errorf("config from root: %w", err)
 	}
-	paths, err := action.Render(context.Background(), dc)
+	ctx := context.Background()
+	items, err := store.Scan(ctx, dc.Root)
+	if err != nil {
+		return fmt.Errorf("scan: %w", err)
+	}
+	paths, err := render.Site(ctx, dc, items)
 	if err != nil {
 		return fmt.Errorf("render: %w", err)
 	}

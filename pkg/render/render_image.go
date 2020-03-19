@@ -1,4 +1,4 @@
-package action
+package render
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/tstromberg/daily/pkg/daily"
-	"github.com/tstromberg/daily/pkg/fs"
 	"k8s.io/klog"
 )
 
@@ -29,21 +28,22 @@ func renderJPEG(i *daily.Item, destRoot string) (*RenderedPost, error) {
 		Item:       i,
 		Thumbnails: map[string]ThumbOpts{},
 	}
-
-	dest := filepath.Join(destRoot, i.Hier, filepath.Base(i.Source))
-	err := fs.Copy(i.Source, dest)
-	if err != nil {
-		return rp, err
-	}
-
-	thumbDir := filepath.Join(destRoot, i.Hier, ".t")
-	for _, t := range defaultThumbOpts {
-		out, err := generateThumbnail(i.Source, thumbDir, t)
+	/*
+		dest := filepath.Join(destRoot, i.RelPath)
+		err := copy.Copy(i.Path, dest)
 		if err != nil {
 			return rp, err
 		}
-		rp.Thumbnails[out] = t
-	}
+
+		thumbDir := filepath.Join(destRoot, filepath.Dir(i.Hier), ".t")
+		for _, t := range defaultThumbOpts {
+			out, err := generateThumbnail(i.Path, thumbDir, t)
+			if err != nil {
+				return rp, err
+			}
+			rp.Thumbnails[out] = t
+		}
+	*/
 	return rp, nil
 }
 

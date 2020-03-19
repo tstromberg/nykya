@@ -9,7 +9,7 @@ daily add <url> --description
 
     image: local, remote
     album: local, remote
-    blog post: yaml?
+    post: yaml?
     url: link
 
 storage:
@@ -38,3 +38,4 @@ storage:
         posts:
             - kind: photo
             ... 
+

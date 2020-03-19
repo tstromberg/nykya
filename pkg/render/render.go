@@ -1,4 +1,4 @@
-package action
+package render
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/tstromberg/daily/pkg/daily"
-	"github.com/tstromberg/daily/pkg/parse"
 	"github.com/tstromberg/daily/pkg/tmpl"
 
 	"k8s.io/klog"
@@ -18,12 +17,26 @@ var (
 	thumbQuality = 85
 )
 
-// Render scans the site input directory and generates static output to the site output directory
-func Render(ctx context.Context, dc daily.Config) ([]string, error) {
-	items, err := parse.Scan(ctx, dc.In)
-	if err != nil {
-		return nil, fmt.Errorf("parse: %w", err)
-	}
+// Stream is basically the entire blog.
+type Stream struct {
+	Posts []*RenderedPost
+	Title string
+
+	Timestamp time.Time
+}
+
+// RenderedPost is a post along with any dynamically generated data we found
+type RenderedPost struct {
+	Item *daily.Item
+
+	ImageSrc string
+	URL      string
+
+	Thumbnails map[string]ThumbOpts
+}
+
+// Site generates static output to the site output directory
+func Site(ctx context.Context, dc daily.Config, items []*daily.Item) ([]string, error) {
 	idx := filepath.Join(dc.Out, "index.html")
 	f, err := os.Create(idx)
 	if err != nil {
@@ -52,7 +65,7 @@ func Render(ctx context.Context, dc daily.Config) ([]string, error) {
 func renderItem(ctx context.Context, i *daily.Item, dst string) (*RenderedPost, error) {
 	klog.Infof("render %+v to %s", i, dst)
 	var err error
-	if i.Kind == "jpeg" {
+	if i.FrontMatter.Kind == "jpeg" {
 		return renderJPEG(i, dst)
 	}
 	return &RenderedPost{Item: i}, err
