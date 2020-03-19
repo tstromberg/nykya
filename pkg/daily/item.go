@@ -4,6 +4,24 @@ import (
 	"time"
 )
 
+type YAMLTime struct {
+	time.Time
+}
+
+func (t *YAMLTime) MarshalYAML() (interface{}, error) {
+	panic("marshal")
+	//	return []byte(t.Format(time.RFC1123Z)), nil
+}
+
+func (t *YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) (time.Time, error) {
+	panic("unmarshal")
+	//	return time.Parse(time.RFC1123Z, string(b))
+}
+
+func NewYAMLTime(t time.Time) YAMLTime {
+	return YAMLTime{t}
+}
+
 // FrontMatter is what gets stored in the header of an item (or in YAML sidecar)
 type FrontMatter struct {
 	// Kind is what kind of post this is. See ValidKinds (required)
@@ -12,8 +30,8 @@ type FrontMatter struct {
 	// Draft is if the page is a draft (do not publish)
 	Draft bool
 
-	// When was the content posted
-	Posted *time.Time
+	// Posted is when was the content posted
+	Posted YAMLTime
 
 	// Title is a title of this post. (optional)
 	Title string `yaml:",omitempty"`

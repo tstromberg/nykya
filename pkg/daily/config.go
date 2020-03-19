@@ -1,6 +1,7 @@
 package daily
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"k8s.io/klog"
@@ -26,6 +27,11 @@ type Config struct {
 // ConfigFromRoot returns the sites configuration
 func ConfigFromRoot(root string) (Config, error) {
 	// TODO: Parse YAML file from root
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return Config{}, fmt.Errorf("abs: %w", err)
+	}
+
 	c := Config{
 		Root: root,
 		In:   filepath.Join(root, "in"),

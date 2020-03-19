@@ -69,7 +69,7 @@ func fromJPEG(path string) (*daily.Item, error) {
 	return &daily.Item{
 		FrontMatter: daily.FrontMatter{
 			Kind:   "jpeg",
-			Posted: &t,
+			Posted: daily.NewYAMLTime(t),
 		},
 		Path: path,
 	}, nil

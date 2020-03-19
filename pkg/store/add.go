@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -51,20 +50,20 @@ func Add(ctx context.Context, dc daily.Config, opts AddOptions) error {
 func addThought(ctx context.Context, dc daily.Config, opts AddOptions) error {
 	klog.Infof("addNote %+v", opts)
 
-	words := strings.Split(opts.Content, " ")
+	words := strings.Split(strings.ToLower(opts.Content), " ")
 	slug := strings.Join(words[0:3], "-")
 
 	i := daily.Item{
 		FrontMatter: daily.FrontMatter{
 			Kind:   opts.Kind,
-			Posted: &opts.Timestamp,
+			Posted: daily.NewYAMLTime(opts.Timestamp),
 			Source: opts.Source,
 		},
 		Content: opts.Content,
 		Format:  daily.Markdown,
 	}
 
-	od, err := outDir(dc, i.FrontMatter)
+	od, err := inDir(dc, i.FrontMatter)
 	if err != nil {
 		return fmt.Errorf("out dir(%+v): %w", i, err)
 	}
@@ -107,14 +106,14 @@ func addPost(ctx context.Context, dc daily.Config, opts AddOptions) error {
 
 	fm := daily.FrontMatter{
 		Kind:   opts.Kind,
-		Posted: &opts.Timestamp,
+		Posted: daily.NewYAMLTime(opts.Timestamp),
 		Source: opts.Source,
 	}
 
 	path := opts.Source
 	// Not right.. filepath.Rel?
 	if strings.HasPrefix(dc.Out, path) {
-		od, err := outDir(dc, fm)
+		od, err := inDir(dc, fm)
 		if err != nil {
 			return fmt.Errorf("out dir: %w", err)
 		}
@@ -129,16 +128,10 @@ func addPost(ctx context.Context, dc daily.Config, opts AddOptions) error {
 	return saveItem(ctx, dc, i)
 }
 
-// defaultHierarchy returns an unconfigured hierarchy. Deal with it.
-func calculateHierarchy(t time.Time, kind string) string {
-	y, m, d := t.Date()
-	return path.Join(kind+"s", fmt.Sprintf("%d-%d-%d", y, m, d))
-}
-
 // saveItem saves an item to disk
 func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
 	klog.Infof("marshalling: %+v", i)
-	b, err := yaml.Marshal(i)
+	b, err := yaml.Marshal(i.FrontMatter)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
@@ -169,12 +162,13 @@ func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
 	}
 }
 
-// outDir calculates the out directory for a file
-func outDir(dc daily.Config, fm daily.FrontMatter) (string, error) {
+// inDir calculates the input directory for a file
+func inDir(dc daily.Config, fm daily.FrontMatter) (string, error) {
 	tmpl := dc.Organization[fm.Kind]
 	if tmpl == "" {
 		tmpl = daily.DefaultOrganization
 	}
+	klog.Infof("inDir for %s: root=%q in=%q tmpl=%q", fm.Kind, dc.Root, dc.In, tmpl)
 
 	t, err := template.New("orgtmpl").Parse(tmpl)
 	if err != nil {
@@ -187,7 +181,7 @@ func outDir(dc daily.Config, fm daily.FrontMatter) (string, error) {
 		return "", fmt.Errorf("execute: %w", err)
 	}
 
-	return filepath.Join(dc.Root, dc.Out, b.String()), nil
+	return filepath.Join(dc.In, b.String()), nil
 }
 
 func saveMarkdown(w io.Writer, bs []byte, content string) error {
