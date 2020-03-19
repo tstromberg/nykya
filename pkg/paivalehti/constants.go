@@ -1,4 +1,4 @@
-package daily
+package paivalehti
 
 // Markdown signifies markdown
 const Markdown = "markdown"

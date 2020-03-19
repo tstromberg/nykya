@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/tstromberg/daily/pkg/daily"
-	"github.com/tstromberg/daily/pkg/store"
+	"github.com/tstromberg/paivalehti/pkg/paivalehti"
+	"github.com/tstromberg/paivalehti/pkg/store"
 )
 
 type addCmd struct {
@@ -16,7 +16,7 @@ type addCmd struct {
 }
 
 func (a *addCmd) Run(globals *Globals) error {
-	dc, err := daily.ConfigFromRoot(globals.Root)
+	dc, err := paivalehti.ConfigFromRoot(globals.Root)
 	if err != nil {
 		return err
 	}

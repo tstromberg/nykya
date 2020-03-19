@@ -1,4 +1,4 @@
-package daily
+package paivalehti
 
 import (
 	"fmt"
@@ -43,7 +43,7 @@ func ConfigFromRoot(root string) (Config, error) {
 		return c, fmt.Errorf("abs: %w", err)
 	}
 
-	cp := filepath.Join(root, "daily.yaml")
+	cp := filepath.Join(root, "paivalehti.yaml")
 	if _, err := os.Stat(cp); err != nil {
 		klog.Infof("%s not found, returning demo site configuration", cp)
 		return c, nil
