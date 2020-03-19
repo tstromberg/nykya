@@ -18,7 +18,7 @@ func (c *renderCmd) Run(globals *Globals) error {
 		return fmt.Errorf("config from root: %w", err)
 	}
 	ctx := context.Background()
-	items, err := store.Scan(ctx, dc.Root)
+	items, err := store.Scan(ctx, dc.In)
 	if err != nil {
 		return fmt.Errorf("scan: %w", err)
 	}

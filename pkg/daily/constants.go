@@ -9,5 +9,5 @@ const HTML = "html"
 // MarkdownSeparator separates YAML documents
 const MarkdownSeparator = "\n---\n"
 
-const HTMLBegin = "<!--\n"
-const HTMLSeparator = "\n-->\n"
+const HTMLBegin = "<!--"
+const HTMLSeparator = "-->"

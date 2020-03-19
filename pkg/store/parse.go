@@ -49,6 +49,39 @@ func fromYAML(path string) (*daily.Item, error) {
 	return i, nil
 }
 
+func fromHTML(path string) (*daily.Item, error) {
+	klog.Infof("yaml: %s", path)
+
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	i := &daily.Item{
+		Path: path,
+	}
+
+	header := b[0:len(daily.HTMLBegin)]
+	klog.Infof("%s header: %q vs %q", path, string(header), daily.HTMLBegin)
+	if bytes.Equal(header, []byte(daily.HTMLBegin)) {
+		si := bytes.Index(b, []byte(daily.HTMLSeparator))
+		if si > 0 {
+			fb := b[len(header):si]
+			klog.Infof("frontmatter bytes: %s", b)
+			var fm daily.FrontMatter
+			err = yaml.Unmarshal(fb, &fm)
+			if err != nil {
+				return nil, fmt.Errorf("unmarshal: %w", err)
+			}
+			i.FrontMatter = fm
+			i.Content = string(b[si+len(daily.HTMLSeparator):])
+		}
+	}
+
+	klog.Infof("read: %+v", i)
+	return i, nil
+}
+
 func fromJPEG(path string) (*daily.Item, error) {
 	klog.Infof("jpeg: %s", path)
 	f, err := os.Open(path)
@@ -112,6 +145,8 @@ func fromFile(path string) (*daily.Item, error) {
 		return fromJPEG(path)
 	case ".yaml":
 		return fromYAML(path)
+	case ".html":
+		return fromHTML(path)
 	default:
 		return nil, fmt.Errorf("unknown file type: %q", ext)
 	}

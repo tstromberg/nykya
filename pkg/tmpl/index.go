@@ -13,7 +13,7 @@ var Index = template.Must(template.New("index").Parse(`<!DOCTYPE html>
   {{ range .Posts }}
   <article itemprop="blogPosts" itemscope itemtype="http://schema.org/BlogPosting">
    <header>
-    <h1 itemprop="headline">{{ .Item.Title }}</h1>
+    <h1 itemprop="headline">{{ .Item.FrontMatter.Title }}</h1>
    </header>
    <div itemprop="articleBody">
    {{ if .ImageSrc }}<img src="{{ .ImageSrc }}" />{{ end }}
