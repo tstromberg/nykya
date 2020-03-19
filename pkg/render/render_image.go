@@ -9,7 +9,7 @@ import (
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/otiai10/copy"
-	"github.com/tstromberg/daily/pkg/daily"
+	"github.com/tstromberg/paivalehti/pkg/paivalehti"
 	"k8s.io/klog"
 )
 
@@ -35,7 +35,7 @@ var defaultThumbOpts = map[string]ThumbOpts{
 	"1920w": ThumbOpts{X: 1920, Quality: 85},
 }
 
-func renderImage(i *daily.Item, destRoot string) (*RenderedPost, error) {
+func renderImage(i *paivalehti.Item, destRoot string) (*RenderedPost, error) {
 	rp := &RenderedPost{
 		Item:   i,
 		URL:    filepath.ToSlash(i.RelPath),

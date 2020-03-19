@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tstromberg/daily/pkg/daily"
+	"github.com/tstromberg/paivalehti/pkg/paivalehti"
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 )
@@ -29,7 +29,7 @@ type AddOptions struct {
 }
 
 // Add an object from a path
-func Add(ctx context.Context, dc daily.Config, opts AddOptions) error {
+func Add(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
 	ts := opts.Timestamp
 	if ts.IsZero() {
 		ts = time.Now()
@@ -47,20 +47,20 @@ func Add(ctx context.Context, dc daily.Config, opts AddOptions) error {
 }
 
 // add is for adding thoughts
-func addThought(ctx context.Context, dc daily.Config, opts AddOptions) error {
+func addThought(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
 	klog.Infof("addNote %+v", opts)
 
 	words := strings.Split(strings.ToLower(opts.Content), " ")
 	slug := strings.Join(words[0:3], "-")
 
-	i := daily.Item{
-		FrontMatter: daily.FrontMatter{
+	i := paivalehti.Item{
+		FrontMatter: paivalehti.FrontMatter{
 			Kind:   opts.Kind,
-			Posted: daily.NewYAMLTime(opts.Timestamp),
+			Posted: paivalehti.NewYAMLTime(opts.Timestamp),
 			Source: opts.Source,
 		},
 		Content: opts.Content,
-		Format:  daily.Markdown,
+		Format:  paivalehti.Markdown,
 	}
 
 	od, err := inDir(dc, i.FrontMatter)
@@ -73,9 +73,9 @@ func addThought(ctx context.Context, dc daily.Config, opts AddOptions) error {
 
 func extForFormat(f string) string {
 	switch f {
-	case daily.Markdown:
+	case paivalehti.Markdown:
 		return ".md"
-	case daily.HTML:
+	case paivalehti.HTML:
 		return ".html"
 	default:
 		return "." + strings.ToLower(f)
@@ -86,16 +86,16 @@ func formatForPath(path string) string {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".md":
-		return daily.Markdown
+		return paivalehti.Markdown
 	case ".html":
-		return daily.HTML
+		return paivalehti.HTML
 	default:
 		return ext
 	}
 }
 
 // addPost is for adding a post
-func addPost(ctx context.Context, dc daily.Config, opts AddOptions) error {
+func addPost(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
 	// A post can be markdown, or HTML.
 	// The file may, or may not exist.
 	klog.Infof("addPost %+v", opts)
@@ -104,9 +104,9 @@ func addPost(ctx context.Context, dc daily.Config, opts AddOptions) error {
 		return fmt.Errorf("no path specified")
 	}
 
-	fm := daily.FrontMatter{
+	fm := paivalehti.FrontMatter{
 		Kind:   opts.Kind,
-		Posted: daily.NewYAMLTime(opts.Timestamp),
+		Posted: paivalehti.NewYAMLTime(opts.Timestamp),
 		Source: opts.Source,
 	}
 
@@ -120,7 +120,7 @@ func addPost(ctx context.Context, dc daily.Config, opts AddOptions) error {
 		path = filepath.Join(od, filepath.Base(opts.Source))
 	}
 
-	i := daily.Item{
+	i := paivalehti.Item{
 		Content: opts.Content,
 		Path:    path,
 		Format:  formatForPath(opts.Source),
@@ -129,7 +129,7 @@ func addPost(ctx context.Context, dc daily.Config, opts AddOptions) error {
 }
 
 // saveItem saves an item to disk
-func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
+func saveItem(ctx context.Context, dc paivalehti.Config, i paivalehti.Item) error {
 	klog.Infof("marshalling: %+v", i)
 	b, err := yaml.Marshal(i.FrontMatter)
 	if err != nil {
@@ -154,9 +154,9 @@ func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
 	defer f.Close()
 
 	switch i.Format {
-	case daily.Markdown:
+	case paivalehti.Markdown:
 		return saveMarkdown(f, b, i.Content)
-	case daily.HTML:
+	case paivalehti.HTML:
 		return saveHTML(f, b, i.Content)
 	default:
 		return fmt.Errorf("unknown format: %s", i.Format)
@@ -164,10 +164,10 @@ func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
 }
 
 // inDir calculates the input directory for a file
-func inDir(dc daily.Config, fm daily.FrontMatter) (string, error) {
+func inDir(dc paivalehti.Config, fm paivalehti.FrontMatter) (string, error) {
 	tmpl := dc.Organization[fm.Kind]
 	if tmpl == "" {
-		tmpl = daily.DefaultOrganization
+		tmpl = paivalehti.DefaultOrganization
 	}
 	klog.Infof("inDir for %s: root=%q in=%q tmpl=%q", fm.Kind, dc.Root, dc.In, tmpl)
 
@@ -187,15 +187,15 @@ func inDir(dc daily.Config, fm daily.FrontMatter) (string, error) {
 
 func saveMarkdown(w io.Writer, bs []byte, content string) error {
 	w.Write(bs)
-	io.WriteString(w, daily.MarkdownSeparator)
+	io.WriteString(w, paivalehti.MarkdownSeparator)
 	_, err := io.WriteString(w, content)
 	return err
 }
 
 func saveHTML(w io.Writer, bs []byte, content string) error {
-	io.WriteString(w, daily.HTMLBegin)
+	io.WriteString(w, paivalehti.HTMLBegin)
 	w.Write(bs)
-	io.WriteString(w, daily.HTMLSeparator)
+	io.WriteString(w, paivalehti.HTMLSeparator)
 	_, err := io.WriteString(w, content)
 	return err
 }

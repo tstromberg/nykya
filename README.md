@@ -1,10 +1,10 @@
-# daily
+# paivalehti
 
 Static blogging platform.
 
 ## Reference
 
-daily <verb> <object> <content>
+paivalehti <verb> <object> <content>
 
 ## Verbs
 
@@ -23,5 +23,5 @@ daily <verb> <object> <content>
 
 ## Flags
 
-* --root - site directory containing daily.yaml file (config)
+* --root - site directory containing paivalehti.yaml file (config)
 * --description -  

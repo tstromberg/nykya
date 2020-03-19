@@ -6,19 +6,19 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/tstromberg/daily/pkg/daily"
+	"github.com/tstromberg/paivalehti/pkg/paivalehti"
 	"k8s.io/klog"
 )
 
 // Scan scans a directory for posted content
-func Scan(ctx context.Context, root string) ([]*daily.Item, error) {
+func Scan(ctx context.Context, root string) ([]*paivalehti.Item, error) {
 	klog.Infof("Scanning root %s ...", root)
 
 	fs, err := ioutil.ReadDir(root)
 	if err != nil {
 		return nil, fmt.Errorf("readdir: %w", err)
 	}
-	var ps []*daily.Item
+	var ps []*paivalehti.Item
 
 	for _, f := range fs {
 		klog.V(1).Infof("Scanning subdir %s", f.Name())

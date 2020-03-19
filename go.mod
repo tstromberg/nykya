@@ -1,4 +1,4 @@
-module github.com/tstromberg/daily
+module github.com/tstromberg/paivalehti
 
 go 1.13
 

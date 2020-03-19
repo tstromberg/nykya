@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tstromberg/daily/pkg/daily"
-	"github.com/tstromberg/daily/pkg/tmpl"
+	"github.com/tstromberg/paivalehti/pkg/paivalehti"
+	"github.com/tstromberg/paivalehti/pkg/tmpl"
 
 	"k8s.io/klog"
 )
@@ -29,13 +29,13 @@ type Stream struct {
 
 // RenderedPost is a post along with any dynamically generated data we found
 type RenderedPost struct {
-	Item   *daily.Item
+	Item   *paivalehti.Item
 	URL    string
 	Thumbs map[string]ThumbMeta
 }
 
 // Site generates static output to the site output directory
-func Site(ctx context.Context, dc daily.Config, items []*daily.Item) ([]string, error) {
+func Site(ctx context.Context, dc paivalehti.Config, items []*paivalehti.Item) ([]string, error) {
 	klog.Infof("Rendering site to %s", dc.Out)
 	idx := filepath.Join(dc.Out, "index.html")
 	f, err := os.Create(idx)
@@ -64,7 +64,7 @@ func Site(ctx context.Context, dc daily.Config, items []*daily.Item) ([]string, 
 	return []string{idx}, tmpl.Index.Execute(f, st)
 }
 
-func renderItem(ctx context.Context, i *daily.Item, dst string) (*RenderedPost, error) {
+func renderItem(ctx context.Context, i *paivalehti.Item, dst string) (*RenderedPost, error) {
 	klog.Infof("render %s %s", i.FrontMatter.Kind, i.RelPath)
 	var err error
 	if i.FrontMatter.Kind == "image" {
