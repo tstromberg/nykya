@@ -70,7 +70,18 @@ var Index = template.Must(template.New("index").Parse(`<!DOCTYPE html>
  <main>
   <ul> 
   {{ range .Posts }}
-  <li itemprop="headline"><i>{{ .Item.FrontMatter.Posted }}</i> &mdash; <a href="{{ .URL }}">{{ .Item.FrontMatter.Title }}</a></li>
+  <li itemprop="headline">
+    <i>{{ .Item.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
+    {{ if eq .Item.FrontMatter.Kind "thought" }}
+        {{ .Item.Content }}
+    {{ else }}
+        <a href="{{ .URL }}">{{ .Item.FrontMatter.Title }}</a>
+    {{ end }}
+    {{ if eq .Item.FrontMatter.Kind "image" }}
+        <a href="{{ .URL }}"><img src="{{ $t := index .Thumbs "100w" }}{{ $t.Path }}"/ ></a>
+    {{ end }}
+    <!-- {{ .Item.FrontMatter.Kind }}: {{ .Item.Path }}-->
+    </li>
   {{ end }}
   </ul>
  <body>

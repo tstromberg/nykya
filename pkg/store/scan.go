@@ -21,7 +21,7 @@ func Scan(ctx context.Context, root string) ([]*daily.Item, error) {
 	var ps []*daily.Item
 
 	for _, f := range fs {
-		klog.Infof("Scanning subdir %s", f.Name())
+		klog.V(1).Infof("Scanning subdir %s", f.Name())
 		ds, err := fromDirectory(filepath.Join(root, f.Name()), root)
 		if err != nil {
 			return nil, fmt.Errorf("parse date: %w", err)

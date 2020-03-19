@@ -2,10 +2,13 @@ package render
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
+	"github.com/otiai10/copy"
 	"github.com/tstromberg/daily/pkg/daily"
 	"k8s.io/klog"
 )
@@ -17,48 +20,60 @@ type ThumbOpts struct {
 	Quality int
 }
 
-var defaultThumbOpts = []ThumbOpts{
-	{X: 300, Y: 200, Quality: 70},
-	{X: 800, Y: 600, Quality: 80},
-	{X: 1920, Y: 1080, Quality: 85},
+// ThumbMeta describes a thumbnail
+type ThumbMeta struct {
+	X    int
+	Y    int
+	Path string
 }
 
-func renderJPEG(i *daily.Item, destRoot string) (*RenderedPost, error) {
+var defaultThumbOpts = map[string]ThumbOpts{
+	"100w":  ThumbOpts{X: 100, Quality: 70},
+	"200w":  ThumbOpts{X: 200, Quality: 70},
+	"400w":  ThumbOpts{X: 400, Quality: 70},
+	"800w":  ThumbOpts{X: 800, Quality: 80},
+	"1920w": ThumbOpts{X: 1920, Quality: 85},
+}
+
+func renderImage(i *daily.Item, destRoot string) (*RenderedPost, error) {
 	rp := &RenderedPost{
-		Item:       i,
-		Thumbnails: map[string]ThumbOpts{},
+		Item:   i,
+		URL:    filepath.ToSlash(i.RelPath),
+		Thumbs: map[string]ThumbMeta{},
 	}
-	/*
-		dest := filepath.Join(destRoot, i.RelPath)
-		err := copy.Copy(i.Path, dest)
-		if err != nil {
-			return rp, err
-		}
 
-		thumbDir := filepath.Join(destRoot, filepath.Dir(i.Hier), ".t")
-		for _, t := range defaultThumbOpts {
-			out, err := generateThumbnail(i.Path, thumbDir, t)
-			if err != nil {
-				return rp, err
-			}
-			rp.Thumbnails[out] = t
-		}
-	*/
-	return rp, nil
-}
-
-func generateThumbnail(in string, thumbDir string, t ThumbOpts) (string, error) {
-	thumbDest := filepath.Join(thumbDir, fmt.Sprintf("%dx%d@%d.jpg", t.X, t.Y, t.Quality))
-	img, err := imgio.Open(in)
+	fullDest := filepath.Join(destRoot, i.RelPath)
+	err := copy.Copy(i.Path, fullDest)
 	if err != nil {
-		return "", fmt.Errorf("open: %w", err)
+		return rp, err
 	}
 
-	thumb := transform.Resize(img, 800, 800, transform.Linear)
-	klog.Infof("writing to output.jpg")
-
-	if err := imgio.Save(thumbDest, thumb, imgio.JPEGEncoder(thumbQuality)); err != nil {
-		return "", fmt.Errorf("save: %w", err)
+	img, err := imgio.Open(i.Path)
+	if err != nil {
+		return rp, fmt.Errorf("imgio: %w", err)
 	}
-	return thumbDest, nil
+	ratio := float32(img.Bounds().Dx()) / float32(img.Bounds().Dy())
+	klog.Infof("%s ratio (x=%d, y=%d): %2.f", i.Path, img.Bounds().Dx(), img.Bounds().Dy(), ratio)
+	thumbDir := filepath.Join(destRoot, filepath.Dir(fullDest), ".t")
+	if err := os.MkdirAll(thumbDir, 0600); err != nil {
+		return rp, err
+	}
+	for name, t := range defaultThumbOpts {
+		base := strings.Split(filepath.Base(i.Path), ".")[0]
+		y := int(float32(t.X) / ratio)
+		thumbDest := filepath.Join(thumbDir, fmt.Sprintf("%s_%dx%d@%d.jpg", base, t.X, y, t.Quality))
+		klog.Infof("thumb %s (y=%d): %s", name, y, thumbDest)
+		resized := transform.Resize(img, t.X, y, transform.Linear)
+
+		// TODO: avoid doing work over again
+		if err := imgio.Save(thumbDest, resized, imgio.JPEGEncoder(t.Quality)); err != nil {
+			return rp, fmt.Errorf("save: %w", err)
+		}
+		rp.Thumbs[name] = ThumbMeta{
+			X:    resized.Bounds().Dx(),
+			Y:    resized.Bounds().Dy(),
+			Path: thumbDest,
+		}
+	}
+	return rp, nil
 }

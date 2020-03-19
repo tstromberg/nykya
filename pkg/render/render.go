@@ -29,16 +29,14 @@ type Stream struct {
 
 // RenderedPost is a post along with any dynamically generated data we found
 type RenderedPost struct {
-	Item *daily.Item
-
-	ImageSrc string
-	URL      string
-
-	Thumbnails map[string]ThumbOpts
+	Item   *daily.Item
+	URL    string
+	Thumbs map[string]ThumbMeta
 }
 
 // Site generates static output to the site output directory
 func Site(ctx context.Context, dc daily.Config, items []*daily.Item) ([]string, error) {
+	klog.Infof("Rendering site to %s", dc.Out)
 	idx := filepath.Join(dc.Out, "index.html")
 	f, err := os.Create(idx)
 	if err != nil {
@@ -67,10 +65,13 @@ func Site(ctx context.Context, dc daily.Config, items []*daily.Item) ([]string, 
 }
 
 func renderItem(ctx context.Context, i *daily.Item, dst string) (*RenderedPost, error) {
-	klog.Infof("render %+v to %s", i, dst)
+	klog.Infof("render %s %s", i.FrontMatter.Kind, i.RelPath)
 	var err error
-	if i.FrontMatter.Kind == "jpeg" {
-		return renderJPEG(i, dst)
+	if i.FrontMatter.Kind == "image" {
+		return renderImage(i, dst)
 	}
-	return &RenderedPost{Item: i}, err
+	return &RenderedPost{
+		Item: i,
+		URL:  filepath.ToSlash(i.RelPath),
+	}, err
 }
