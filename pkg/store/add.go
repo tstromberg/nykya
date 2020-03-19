@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/tstromberg/daily/pkg/daily"
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 )
 
@@ -135,6 +135,7 @@ func saveItem(ctx context.Context, dc daily.Config, i daily.Item) error {
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
+	klog.Infof(string(b))
 
 	dir := filepath.Dir(i.Path)
 	if _, err := os.Stat(dir); err != nil {

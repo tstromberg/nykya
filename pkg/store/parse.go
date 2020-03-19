@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 
 	"github.com/rwcarlsen/goexif/exif"

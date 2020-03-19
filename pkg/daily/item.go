@@ -8,14 +8,22 @@ type YAMLTime struct {
 	time.Time
 }
 
-func (t *YAMLTime) MarshalYAML() (interface{}, error) {
-	panic("marshal")
-	//	return []byte(t.Format(time.RFC1123Z)), nil
+func (yt YAMLTime) MarshalYAML() (interface{}, error) {
+	return yt.Format(time.RFC1123Z), nil
 }
 
-func (t *YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) (time.Time, error) {
-	panic("unmarshal")
-	//	return time.Parse(time.RFC1123Z, string(b))
+func (yt YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	err := unmarshal(&s)
+	if err != nil {
+		return err
+	}
+	tp, err := time.Parse(time.RFC1123Z, s)
+	if err != nil {
+		return err
+	}
+	yt.Time = tp
+	return nil
 }
 
 func NewYAMLTime(t time.Time) YAMLTime {
@@ -31,7 +39,7 @@ type FrontMatter struct {
 	Draft bool
 
 	// Posted is when was the content posted
-	Posted YAMLTime
+	Posted YAMLTime `yaml:`
 
 	// Title is a title of this post. (optional)
 	Title string `yaml:",omitempty"`
