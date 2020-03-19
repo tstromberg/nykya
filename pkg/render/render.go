@@ -19,8 +19,10 @@ var (
 
 // Stream is basically the entire blog.
 type Stream struct {
-	Posts []*RenderedPost
-	Title string
+	Posts       []*RenderedPost
+	Title       string
+	Subtitle    string
+	Description string
 
 	Timestamp time.Time
 }
@@ -55,9 +57,11 @@ func Site(ctx context.Context, dc daily.Config, items []*daily.Item) ([]string, 
 	}
 
 	st := &Stream{
-		Title:     "boring blog",
-		Timestamp: time.Now(),
-		Posts:     rps,
+		Title:       dc.Title,
+		Subtitle:    dc.Subtitle,
+		Description: dc.Description,
+		Timestamp:   time.Now(),
+		Posts:       rps,
 	}
 	return []string{idx}, tmpl.Index.Execute(f, st)
 }

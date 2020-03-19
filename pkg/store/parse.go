@@ -143,7 +143,7 @@ func fromFile(path string) (*daily.Item, error) {
 	switch ext {
 	case ".jpg", ".jpeg":
 		return fromJPEG(path)
-	case ".yaml":
+	case ".yaml", ".md":
 		return fromYAML(path)
 	case ".html":
 		return fromHTML(path)

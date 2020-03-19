@@ -1,10 +1,6 @@
-kind: SiteConfig
+kind: Config
 version: 0
 
-site:
-  title: Just something a little funny
-  author: Thomas
-
-directories:
-  in: in/
-  out: out/
+title: "Daily: Thomas Stromberg"
+subtitle: ""
+description: "" 
