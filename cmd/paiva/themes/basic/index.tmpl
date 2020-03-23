@@ -1,0 +1,28 @@
+{{template "base" .}}
+
+{{ define "title" }}{{ .Title }}{{ end }}}
+
+{{ define "headers" }}
+  <link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
+  <meta name=viewport content="width=device-width, initial-scale=1"/>
+{{ end }}}
+
+{{ define "content" }}}
+ <h1>{{ .Title }}</h1>
+  <ul> 
+  {{ range .Annotated }}
+    <li itemprop="headline">
+        <i>{{ .Item.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
+        {{ if eq .Item.FrontMatter.Kind "thought" }}
+            {{ .Item.Content }}
+        {{ else }}
+            <a href="{{ .URL }}">{{ .Item.FrontMatter.Title }}</a>
+        {{ end }}
+        {{ if eq .Item.FrontMatter.Kind "image" }}
+            <a href="{{ .URL }}"><img src="{{ $t := index .Thumbs "100w" }}{{ $t.Path }}"/ ></a>
+        {{ end }}
+        <!-- {{ .Item.FrontMatter.Kind }}: {{ .Item.Path }}-->
+        </li>
+  {{ end }}
+  </ul>
+{{ end }}

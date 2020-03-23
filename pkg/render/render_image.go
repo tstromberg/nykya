@@ -35,8 +35,8 @@ var defaultThumbOpts = map[string]ThumbOpts{
 	"1920w": ThumbOpts{X: 1920, Quality: 85},
 }
 
-func renderImage(i *paivalehti.Item, destRoot string) (*RenderedPost, error) {
-	rp := &RenderedPost{
+func renderImage(i *paivalehti.Item, destRoot string) (*annotatedItem, error) {
+	rp := &annotatedItem{
 		Item:   i,
 		URL:    filepath.ToSlash(i.RelPath),
 		Thumbs: map[string]ThumbMeta{},

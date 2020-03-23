@@ -21,10 +21,45 @@ type Config struct {
 	Subtitle    string
 	Description string
 
-	In  string
-	Out string
+	In    string
+	Out   string
+	Theme string
 
 	Organization map[string]string
+}
+
+func findTheme(root string, theme string) string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		klog.Errorf("unable to getwd: %v", err)
+		pwd = "."
+	}
+	if theme == "" {
+		theme = "basic"
+	}
+
+	try := []string{
+		theme,
+		filepath.Join(root, "theme"),
+		filepath.Join(root, theme),
+		filepath.Join(pwd, theme),
+		filepath.Join(root, "themes", theme),
+		filepath.Join(pwd, "themes", theme),
+		filepath.Join(root, "..", "themes", theme),
+		filepath.Join(pwd, "..", "themes", theme),
+		filepath.Join(root, "..", "..", "themes", theme),
+		filepath.Join(pwd, "..", "..", "themes", theme),
+	}
+
+	for _, path := range try {
+		_, err := os.Stat(filepath.Join(path, "base.tmpl"))
+		if err == nil {
+			klog.Infof("found theme: %s", path)
+			return path
+		}
+		klog.Infof("tried %s", path)
+	}
+	return ""
 }
 
 // ConfigFromRoot returns the sites configuration
@@ -45,6 +80,7 @@ func ConfigFromRoot(root string) (Config, error) {
 
 	cp := filepath.Join(root, "paivalehti.yaml")
 	if _, err := os.Stat(cp); err != nil {
+		c.Theme = findTheme(root, c.Theme)
 		klog.Infof("%s not found, returning demo site configuration", cp)
 		return c, nil
 	}
@@ -58,6 +94,8 @@ func ConfigFromRoot(root string) (Config, error) {
 	if err != nil {
 		return c, fmt.Errorf("unmarshal: %w", err)
 	}
+
+	c.Theme = findTheme(root, c.Theme)
 	klog.Infof("Config from %s: %+v", root, c)
 	return c, nil
 }
