@@ -1,16 +1,16 @@
 {{template "base" .}}
 
-{{ define "title" }}{{ .Title }}{{ end }}}
+{{ define "title" }}{{ .Title }}{{ end }}
 
 {{ define "headers" }}
   <link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
   <meta name=viewport content="width=device-width, initial-scale=1"/>
-{{ end }}}
+{{ end }}
 
-{{ define "content" }}}
+{{ define "content" }}
  <h1>{{ .Title }}</h1>
   <ul> 
-  {{ range .Annotated }}
+  {{ range .Rendered }}
     <li itemprop="headline">
         <i>{{ .Item.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
         {{ if eq .Item.FrontMatter.Kind "thought" }}

@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,28 +36,29 @@ var defaultThumbOpts = map[string]ThumbOpts{
 	"1920w": ThumbOpts{X: 1920, Quality: 85},
 }
 
-func renderImage(i *paivalehti.Item, destRoot string) (*annotatedItem, error) {
-	rp := &annotatedItem{
-		Item:   i,
-		URL:    filepath.ToSlash(i.RelPath),
-		Thumbs: map[string]ThumbMeta{},
+func image(ctx context.Context, dc paivalehti.Config, i *paivalehti.Item) (*renderedItem, error) {
+	ri := &renderedItem{
+		Item:    i,
+		URL:     filepath.ToSlash(i.RelPath),
+		OutPath: i.RelPath,
+		Thumbs:  map[string]ThumbMeta{},
 	}
 
-	fullDest := filepath.Join(destRoot, i.RelPath)
+	fullDest := filepath.Join(dc.Out, i.RelPath)
 	err := copy.Copy(i.Path, fullDest)
 	if err != nil {
-		return rp, err
+		return ri, err
 	}
 
 	img, err := imgio.Open(i.Path)
 	if err != nil {
-		return rp, fmt.Errorf("imgio: %w", err)
+		return ri, fmt.Errorf("imgio: %w", err)
 	}
 	ratio := float32(img.Bounds().Dx()) / float32(img.Bounds().Dy())
 	klog.Infof("%s ratio (x=%d, y=%d): %2.f", i.Path, img.Bounds().Dx(), img.Bounds().Dy(), ratio)
-	thumbDir := filepath.Join(destRoot, filepath.Dir(fullDest), ".t")
+	thumbDir := filepath.Join(filepath.Dir(fullDest), ".t")
 	if err := os.MkdirAll(thumbDir, 0600); err != nil {
-		return rp, err
+		return ri, err
 	}
 	for name, t := range defaultThumbOpts {
 		base := strings.Split(filepath.Base(i.Path), ".")[0]
@@ -67,13 +69,13 @@ func renderImage(i *paivalehti.Item, destRoot string) (*annotatedItem, error) {
 
 		// TODO: avoid doing work over again
 		if err := imgio.Save(thumbDest, resized, imgio.JPEGEncoder(t.Quality)); err != nil {
-			return rp, fmt.Errorf("save: %w", err)
+			return ri, fmt.Errorf("save: %w", err)
 		}
-		rp.Thumbs[name] = ThumbMeta{
+		ri.Thumbs[name] = ThumbMeta{
 			X:    resized.Bounds().Dx(),
 			Y:    resized.Bounds().Dy(),
 			Path: thumbDest,
 		}
 	}
-	return rp, nil
+	return ri, nil
 }
