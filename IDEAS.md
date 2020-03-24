@@ -1,11 +1,11 @@
 functionality:
-    paivalehti init // later
-    paivalehti render
-    paivalehti add
-    paivalehti social sync
+    ny init // later
+    ny render
+    ny add
+    ny social sync
 
 
-paivalehti add <url> --description
+ny add <url> --description
 
     image: local, remote
     album: local, remote

@@ -1,4 +1,4 @@
-package paivalehti
+package nykya
 
 import (
 	"time"
@@ -20,7 +20,11 @@ func (yt YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	tp, err := time.Parse(time.RFC1123Z, s)
 	if err != nil {
-		return err
+		// Be forgiving
+		tp, err = time.Parse("2006-01-02", s)
+		if err != nil {
+			return err
+		}
 	}
 	yt.Time = tp
 	return nil
@@ -51,8 +55,8 @@ type FrontMatter struct {
 	Source string `yaml:",omitempty"`
 }
 
-// Item is a post to be rendered
-type Item struct {
+// RawItem is a post to be rendered
+type RawItem struct {
 	FrontMatter FrontMatter
 	// Content is inline content
 	Content string

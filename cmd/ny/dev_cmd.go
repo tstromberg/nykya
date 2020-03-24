@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/rjeczalik/notify"
-	"github.com/tstromberg/paivalehti/pkg/paivalehti"
-	"github.com/tstromberg/paivalehti/pkg/render"
-	"github.com/tstromberg/paivalehti/pkg/store"
+	"github.com/tstromberg/nykya/pkg/nykya"
+	"github.com/tstromberg/nykya/pkg/render"
+	"github.com/tstromberg/nykya/pkg/store"
 	"k8s.io/klog"
 )
 
@@ -16,7 +16,7 @@ type devCmd struct {
 	Port int `help:"Set a port TCP number"`
 }
 
-func renderLoop(ctx context.Context, dc paivalehti.Config) error {
+func renderLoop(ctx context.Context, dc nykya.Config) error {
 	klog.Infof("starting render loop ...")
 	c := make(chan notify.EventInfo, 1)
 	if err := notify.Watch(dc.In, c, notify.Remove); err != nil {
@@ -39,7 +39,7 @@ func renderLoop(ctx context.Context, dc paivalehti.Config) error {
 }
 
 func (c *devCmd) Run(globals *Globals) error {
-	dc, err := paivalehti.ConfigFromRoot(globals.Root)
+	dc, err := nykya.ConfigFromRoot(globals.Root)
 	if err != nil {
 		return fmt.Errorf("config from root: %w", err)
 	}

@@ -14,14 +14,19 @@ import (
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
-	"github.com/tstromberg/paivalehti/pkg/paivalehti"
+	"github.com/tstromberg/nykya/pkg/nykya"
 )
 
 func init() {
 	exif.RegisterParsers(mknote.All...)
 }
 
-func fromYAML(path string) (*paivalehti.Item, error) {
+func normalizeNewlines(bs []byte) []byte {
+	bs = bytes.Replace(bs, []byte{13, 10}, []byte{10}, -1)
+	return bytes.Replace(bs, []byte{13}, []byte{10}, -1)
+}
+
+func fromMarkdown(path string) (*nykya.RawItem, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
@@ -31,11 +36,13 @@ func fromYAML(path string) (*paivalehti.Item, error) {
 	if err != nil {
 		return nil, err
 	}
+	b = normalizeNewlines(b)
 
-	i := &paivalehti.Item{
-		FrontMatter: paivalehti.FrontMatter{
-			Posted: paivalehti.NewYAMLTime(t.ModTime()),
+	i := &nykya.RawItem{
+		FrontMatter: nykya.FrontMatter{
+			Posted: nykya.NewYAMLTime(t.ModTime()),
 		},
+		Format: nykya.Markdown,
 	}
 
 	err = yaml.Unmarshal(b, &i.FrontMatter)
@@ -43,15 +50,17 @@ func fromYAML(path string) (*paivalehti.Item, error) {
 		return nil, fmt.Errorf("unmarshal: %w", err)
 	}
 
-	// TODO: Find a more elegant way to handle front-matter
-	si := bytes.Index(b, []byte(paivalehti.MarkdownSeparator))
+	si := bytes.Index(b, []byte(nykya.MarkdownSeparator))
 	if si > 0 {
-		i.Content = string(b[si+len(paivalehti.MarkdownSeparator):])
+		i.Content = string(b[si+len(nykya.MarkdownSeparator):])
+		klog.Infof("%s: found markdown content: %s", path, i.Content)
+	} else {
+		klog.Warningf("%s: did not find markdown content (si=%d)", path, si)
 	}
 	return i, nil
 }
 
-func fromHTML(path string) (*paivalehti.Item, error) {
+func fromHTML(path string) (*nykya.RawItem, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
@@ -62,16 +71,19 @@ func fromHTML(path string) (*paivalehti.Item, error) {
 		return nil, err
 	}
 
-	i := &paivalehti.Item{
-		FrontMatter: paivalehti.FrontMatter{
-			Posted: paivalehti.NewYAMLTime(t.ModTime()),
+	b = normalizeNewlines(b)
+
+	i := &nykya.RawItem{
+		FrontMatter: nykya.FrontMatter{
+			Posted: nykya.NewYAMLTime(t.ModTime()),
 		},
+		Format: nykya.HTML,
 	}
 
-	header := b[0:len(paivalehti.HTMLBegin)]
-	klog.V(1).Infof("%s header: %q vs %q", path, string(header), paivalehti.HTMLBegin)
-	if bytes.Equal(header, []byte(paivalehti.HTMLBegin)) {
-		si := bytes.Index(b, []byte(paivalehti.HTMLSeparator))
+	header := b[0:len(nykya.HTMLBegin)]
+	klog.V(1).Infof("%s header: %q vs %q", path, string(header), nykya.HTMLBegin)
+	if bytes.Equal(header, []byte(nykya.HTMLBegin)) {
+		si := bytes.Index(b, []byte(nykya.HTMLSeparator))
 		if si > 0 {
 			fb := b[len(header):si]
 			klog.V(1).Infof("frontmatter bytes: %s", b)
@@ -79,24 +91,26 @@ func fromHTML(path string) (*paivalehti.Item, error) {
 			if err != nil {
 				return nil, fmt.Errorf("unmarshal: %w", err)
 			}
-			i.Content = string(b[si+len(paivalehti.HTMLSeparator):])
+			klog.Infof("%s: found html content: %s", path, i.Content)
+			i.Content = string(b[si+len(nykya.HTMLSeparator):])
 		}
 	}
 
 	return i, nil
 }
 
-func fromJPEG(path string) (*paivalehti.Item, error) {
+func fromJPEG(path string) (*nykya.RawItem, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
 	}
 
-	i := &paivalehti.Item{
-		FrontMatter: paivalehti.FrontMatter{
+	i := &nykya.RawItem{
+		FrontMatter: nykya.FrontMatter{
 			Kind:   "image",
-			Posted: paivalehti.NewYAMLTime(t.ModTime()),
+			Posted: nykya.NewYAMLTime(t.ModTime()),
 		},
+		Format: nykya.JPEG,
 	}
 
 	f, err := os.Open(path)
@@ -114,7 +128,7 @@ func fromJPEG(path string) (*paivalehti.Item, error) {
 	if err != nil {
 		klog.Errorf("datetime(%s): %v", path, err)
 	} else {
-		i.FrontMatter.Posted = paivalehti.NewYAMLTime(et)
+		i.FrontMatter.Posted = nykya.NewYAMLTime(et)
 	}
 
 	ed, err := ex.Get(exif.ImageDescription)
@@ -125,20 +139,20 @@ func fromJPEG(path string) (*paivalehti.Item, error) {
 	return i, nil
 }
 
-func fromDirectory(path string, root string) ([]*paivalehti.Item, error) {
+func fromDirectory(path string, root string) ([]*nykya.RawItem, error) {
 	klog.V(2).Infof("Looking inside %s ...", path)
 	fs, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("readdir: %w", err)
 	}
-	var ps []*paivalehti.Item
+	var ps []*nykya.RawItem
 	for _, f := range fs {
 		if f.IsDir() {
-			dirItems, err := fromDirectory(filepath.Join(root, path, f.Name()), root)
+			dirRawItems, err := fromDirectory(filepath.Join(root, path, f.Name()), root)
 			if err != nil {
 				klog.Warningf("from dir %s: %v", f.Name(), err)
 			}
-			ps = append(ps, dirItems...)
+			ps = append(ps, dirRawItems...)
 			continue
 		}
 
@@ -168,14 +182,14 @@ func fromDirectory(path string, root string) ([]*paivalehti.Item, error) {
 	return ps, nil
 }
 
-func fromFile(path string) (*paivalehti.Item, error) {
+func fromFile(path string) (*nykya.RawItem, error) {
 	klog.V(1).Infof("parsing: %v", path)
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".jpg", ".jpeg":
 		return fromJPEG(path)
 	case ".yaml", ".md":
-		return fromYAML(path)
+		return fromMarkdown(path)
 	case ".html":
 		return fromHTML(path)
 	default:

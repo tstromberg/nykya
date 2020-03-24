@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tstromberg/paivalehti/pkg/paivalehti"
-	"github.com/tstromberg/paivalehti/pkg/render"
-	"github.com/tstromberg/paivalehti/pkg/store"
+	"github.com/tstromberg/nykya/pkg/nykya"
+	"github.com/tstromberg/nykya/pkg/render"
+	"github.com/tstromberg/nykya/pkg/store"
 	"k8s.io/klog"
 )
 
 type renderCmd struct{}
 
 func (c *renderCmd) Run(globals *Globals) error {
-	dc, err := paivalehti.ConfigFromRoot(globals.Root)
+	dc, err := nykya.ConfigFromRoot(globals.Root)
 	if err != nil {
 		return fmt.Errorf("config from root: %w", err)
 	}

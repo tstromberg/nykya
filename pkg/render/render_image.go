@@ -10,7 +10,7 @@ import (
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
 	"github.com/otiai10/copy"
-	"github.com/tstromberg/paivalehti/pkg/paivalehti"
+	"github.com/tstromberg/nykya/pkg/nykya"
 	"k8s.io/klog"
 )
 
@@ -36,9 +36,9 @@ var defaultThumbOpts = map[string]ThumbOpts{
 	"1920w": ThumbOpts{X: 1920, Quality: 85},
 }
 
-func image(ctx context.Context, dc paivalehti.Config, i *paivalehti.Item) (*renderedItem, error) {
-	ri := &renderedItem{
-		Item:    i,
+func image(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*RenderedItem, error) {
+	ri := &RenderedItem{
+		RawItem: i,
 		URL:     filepath.ToSlash(i.RelPath),
 		OutPath: i.RelPath,
 		Thumbs:  map[string]ThumbMeta{},

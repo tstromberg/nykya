@@ -1,4 +1,4 @@
-package paivalehti
+package nykya
 
 import (
 	"fmt"
@@ -78,7 +78,7 @@ func ConfigFromRoot(root string) (Config, error) {
 		return c, fmt.Errorf("abs: %w", err)
 	}
 
-	cp := filepath.Join(root, "paivalehti.yaml")
+	cp := filepath.Join(root, "nykya.yaml")
 	if _, err := os.Stat(cp); err != nil {
 		c.Theme = findTheme(root, c.Theme)
 		klog.Infof("%s not found, returning demo site configuration", cp)

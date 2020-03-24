@@ -28,8 +28,8 @@ func main() {
 
 	cli := CLI{}
 	ctx := kong.Parse(&cli,
-		kong.Name("paivalehti"),
-		kong.Description("paivalehti personal site generator"),
+		kong.Name("nykya"),
+		kong.Description("nykya personal site generator"),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,

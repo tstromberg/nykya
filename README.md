@@ -1,10 +1,10 @@
-# paivalehti
+# nykya
 
 Static blogging platform.
 
 ## Reference
 
-paivalehti <verb> <object> <content>
+nykya <verb> <object> <content>
 
 ## Verbs
 
@@ -23,5 +23,5 @@ paivalehti <verb> <object> <content>
 
 ## Flags
 
-* --root - site directory containing paivalehti.yaml file (config)
+* --root - site directory containing nykya.yaml file (config)
 * --description -  

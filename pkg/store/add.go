@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tstromberg/paivalehti/pkg/paivalehti"
+	"github.com/tstromberg/nykya/pkg/nykya"
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 )
@@ -29,7 +29,7 @@ type AddOptions struct {
 }
 
 // Add an object from a path
-func Add(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
+func Add(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	ts := opts.Timestamp
 	if ts.IsZero() {
 		ts = time.Now()
@@ -47,20 +47,20 @@ func Add(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
 }
 
 // add is for adding thoughts
-func addThought(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
+func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	klog.Infof("addNote %+v", opts)
 
 	words := strings.Split(strings.ToLower(opts.Content), " ")
 	slug := strings.Join(words[0:3], "-")
 
-	i := paivalehti.Item{
-		FrontMatter: paivalehti.FrontMatter{
+	i := nykya.RawItem{
+		FrontMatter: nykya.FrontMatter{
 			Kind:   opts.Kind,
-			Posted: paivalehti.NewYAMLTime(opts.Timestamp),
+			Posted: nykya.NewYAMLTime(opts.Timestamp),
 			Source: opts.Source,
 		},
 		Content: opts.Content,
-		Format:  paivalehti.Markdown,
+		Format:  nykya.Markdown,
 	}
 
 	od, err := inDir(dc, i.FrontMatter)
@@ -68,14 +68,14 @@ func addThought(ctx context.Context, dc paivalehti.Config, opts AddOptions) erro
 		return fmt.Errorf("out dir(%+v): %w", i, err)
 	}
 	i.Path = filepath.Join(od, slug+".md")
-	return saveItem(ctx, dc, i)
+	return saveRawItem(ctx, dc, i)
 }
 
 func extForFormat(f string) string {
 	switch f {
-	case paivalehti.Markdown:
+	case nykya.Markdown:
 		return ".md"
-	case paivalehti.HTML:
+	case nykya.HTML:
 		return ".html"
 	default:
 		return "." + strings.ToLower(f)
@@ -86,16 +86,16 @@ func formatForPath(path string) string {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".md":
-		return paivalehti.Markdown
+		return nykya.Markdown
 	case ".html":
-		return paivalehti.HTML
+		return nykya.HTML
 	default:
 		return ext
 	}
 }
 
 // addPost is for adding a post
-func addPost(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
+func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	// A post can be markdown, or HTML.
 	// The file may, or may not exist.
 	klog.Infof("addPost %+v", opts)
@@ -104,9 +104,9 @@ func addPost(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
 		return fmt.Errorf("no path specified")
 	}
 
-	fm := paivalehti.FrontMatter{
+	fm := nykya.FrontMatter{
 		Kind:   opts.Kind,
-		Posted: paivalehti.NewYAMLTime(opts.Timestamp),
+		Posted: nykya.NewYAMLTime(opts.Timestamp),
 		Source: opts.Source,
 	}
 
@@ -120,16 +120,16 @@ func addPost(ctx context.Context, dc paivalehti.Config, opts AddOptions) error {
 		path = filepath.Join(od, filepath.Base(opts.Source))
 	}
 
-	i := paivalehti.Item{
+	i := nykya.RawItem{
 		Content: opts.Content,
 		Path:    path,
 		Format:  formatForPath(opts.Source),
 	}
-	return saveItem(ctx, dc, i)
+	return saveRawItem(ctx, dc, i)
 }
 
-// saveItem saves an item to disk
-func saveItem(ctx context.Context, dc paivalehti.Config, i paivalehti.Item) error {
+// saveRawItem saves an item to disk
+func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem) error {
 	klog.Infof("marshalling: %+v", i)
 	b, err := yaml.Marshal(i.FrontMatter)
 	if err != nil {
@@ -154,9 +154,9 @@ func saveItem(ctx context.Context, dc paivalehti.Config, i paivalehti.Item) erro
 	defer f.Close()
 
 	switch i.Format {
-	case paivalehti.Markdown:
+	case nykya.Markdown:
 		return saveMarkdown(f, b, i.Content)
-	case paivalehti.HTML:
+	case nykya.HTML:
 		return saveHTML(f, b, i.Content)
 	default:
 		return fmt.Errorf("unknown format: %s", i.Format)
@@ -164,10 +164,10 @@ func saveItem(ctx context.Context, dc paivalehti.Config, i paivalehti.Item) erro
 }
 
 // inDir calculates the input directory for a file
-func inDir(dc paivalehti.Config, fm paivalehti.FrontMatter) (string, error) {
+func inDir(dc nykya.Config, fm nykya.FrontMatter) (string, error) {
 	tmpl := dc.Organization[fm.Kind]
 	if tmpl == "" {
-		tmpl = paivalehti.DefaultOrganization
+		tmpl = nykya.DefaultOrganization
 	}
 	klog.Infof("inDir for %s: root=%q in=%q tmpl=%q", fm.Kind, dc.Root, dc.In, tmpl)
 
@@ -187,15 +187,15 @@ func inDir(dc paivalehti.Config, fm paivalehti.FrontMatter) (string, error) {
 
 func saveMarkdown(w io.Writer, bs []byte, content string) error {
 	w.Write(bs)
-	io.WriteString(w, paivalehti.MarkdownSeparator)
+	io.WriteString(w, nykya.MarkdownSeparator)
 	_, err := io.WriteString(w, content)
 	return err
 }
 
 func saveHTML(w io.Writer, bs []byte, content string) error {
-	io.WriteString(w, paivalehti.HTMLBegin)
+	io.WriteString(w, nykya.HTMLBegin)
 	w.Write(bs)
-	io.WriteString(w, paivalehti.HTMLSeparator)
+	io.WriteString(w, nykya.HTMLSeparator)
 	_, err := io.WriteString(w, content)
 	return err
 }

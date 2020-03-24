@@ -12,16 +12,16 @@
   <ul> 
   {{ range .Rendered }}
     <li itemprop="headline">
-        <i>{{ .Item.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
-        {{ if eq .Item.FrontMatter.Kind "thought" }}
-            {{ .Item.Content }}
+        <i>{{ .RawItem.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
+        {{ if eq .RawItem.FrontMatter.Kind "thought" }}
+            {{ .RawItem.Content }}
         {{ else }}
-            <a href="{{ .URL }}">{{ .Item.FrontMatter.Title }}</a>
+            <a href="{{ .URL }}">{{ .RawItem.FrontMatter.Title }}</a>
         {{ end }}
-        {{ if eq .Item.FrontMatter.Kind "image" }}
+        {{ if eq .RawItem.FrontMatter.Kind "image" }}
             <a href="{{ .URL }}"><img src="{{ $t := index .Thumbs "100w" }}{{ $t.Path }}"/ ></a>
         {{ end }}
-        <!-- {{ .Item.FrontMatter.Kind }}: {{ .Item.Path }}-->
+        <!-- {{ .RawItem.FrontMatter.Kind }}: {{ .RawItem.Path }}-->
         </li>
   {{ end }}
   </ul>

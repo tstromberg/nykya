@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tstromberg/paivalehti/pkg/paivalehti"
+	"github.com/tstromberg/nykya/pkg/nykya"
 
 	"k8s.io/klog"
 )
@@ -20,7 +20,7 @@ var (
 
 // Stream is basically the entire blog.
 type Stream struct {
-	Rendered    []*renderedItem
+	Rendered    []*RenderedItem
 	Title       string
 	Subtitle    string
 	Description string
@@ -28,25 +28,26 @@ type Stream struct {
 	Timestamp time.Time
 }
 
-// renderedItem is a post along with any dynamically generated data we found
-type renderedItem struct {
-	Item    *paivalehti.Item
+// RenderedItem is a post along with any dynamically generated data we found
+type RenderedItem struct {
+	RawItem *nykya.RawItem
 	OutPath string
 	URL     string
 	Thumbs  map[string]ThumbMeta
 
-	Title string
+	Content template.HTML
+	Title   string
 }
 
-func indexesForItem(i *paivalehti.Item) []string {
+func indexesForRawItem(i *nykya.RawItem) []string {
 	// TODO: make this more advanced
 	base := strings.Split(filepath.ToSlash(i.RelPath), "/")[0]
 	return []string{"/", base}
 }
 
 // Site generates static output to the site output directory
-func Site(ctx context.Context, dc paivalehti.Config, items []*paivalehti.Item) ([]string, error) {
-	rs := []*renderedItem{}
+func Site(ctx context.Context, dc nykya.Config, items []*nykya.RawItem) ([]string, error) {
+	rs := []*RenderedItem{}
 	paths := []string{}
 
 	for _, i := range items {
@@ -105,26 +106,12 @@ func siteTmpl(name string, themeRoot string, dst string, data interface{}) error
 
 }
 
-func siteIndex(ctx context.Context, dc paivalehti.Config, st *Stream) (string, error) {
+func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error) {
 	dst := filepath.Join(dc.Out, "index.html")
 	return dst, siteTmpl("index", dc.Theme, dst, st)
 }
 
-func post(ctx context.Context, dc paivalehti.Config, i *paivalehti.Item) (*renderedItem, error) {
-	ext := filepath.Ext(i.RelPath)
-	outPath := strings.Replace(i.RelPath, ext, ".html", 1)
-
-	ri := &renderedItem{
-		Title:   i.FrontMatter.Title,
-		Item:    i,
-		URL:     filepath.ToSlash(outPath),
-		OutPath: outPath,
-	}
-
-	return ri, siteTmpl("post", dc.Theme, filepath.Join(dc.Out, outPath), ri)
-}
-
-func renderItem(ctx context.Context, dc paivalehti.Config, i *paivalehti.Item) (*renderedItem, error) {
+func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*RenderedItem, error) {
 	klog.Infof("render %s %s: %+v", i.FrontMatter.Kind, i.RelPath, i)
 
 	switch i.FrontMatter.Kind {
@@ -133,8 +120,9 @@ func renderItem(ctx context.Context, dc paivalehti.Config, i *paivalehti.Item) (
 	case "post":
 		return post(ctx, dc, i)
 	default:
-		return &renderedItem{
-			Item: i,
+		return &RenderedItem{
+			RawItem: i,
+			Content: template.HTML(i.Content),
 		}, nil
 	}
 }
