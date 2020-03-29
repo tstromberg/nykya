@@ -10,6 +10,9 @@ import (
 	"k8s.io/klog"
 )
 
+// Configuration file name
+const configFileName = "nykya.yaml"
+
 // DefaultOrganization shows where to put files if organization is unset
 const DefaultOrganization = `{{ .Kind }}s/{{ .Posted.Format "2006-01-02" }}`
 
@@ -57,39 +60,51 @@ func findTheme(root string, theme string) string {
 			klog.Infof("found theme: %s", path)
 			return path
 		}
-		klog.Infof("tried %s", path)
 	}
 	return ""
 }
 
-// ConfigFromRoot returns the sites configuration
-func ConfigFromRoot(root string) (Config, error) {
-	c := Config{
+func defaultConfig(root string) Config {
+	return Config{
 		Root:        root,
 		In:          filepath.Join(root, "in"),
 		Out:         filepath.Join(root, "out"),
 		Title:       "Example Title",
 		Subtitle:    "Example Subtitle",
 		Description: "Example Description",
+		Theme:       "basic",
+	}
+}
+
+// ConfigFromRoot returns the sites configuration
+func ConfigFromRoot(rootOverride string) (Config, error) {
+	root := "."
+	envRoot := os.Getenv("NYKYA_ROOT")
+
+	if rootOverride != "" {
+		klog.Infof("root set to: %v", rootOverride)
+		root = rootOverride
+	} else if envRoot != "" {
+		klog.Infof("NYKYA_ROOT set to: %v", envRoot)
+		root = envRoot
 	}
 
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return c, fmt.Errorf("abs: %w", err)
-	}
-
-	cp := filepath.Join(root, "nykya.yaml")
+	cp := filepath.Join(root, configFileName)
 	if _, err := os.Stat(cp); err != nil {
-		c.Theme = findTheme(root, c.Theme)
-		klog.Infof("%s not found, returning demo site configuration", cp)
-		return c, nil
+		return Config{}, fmt.Errorf("Unable to find %s within --root (%q), $NYKYA_ROOT (%q), and the current directory", configFileName, rootOverride, envRoot)
 	}
 
 	b, err := ioutil.ReadFile(cp)
 	if err != nil {
-		return c, fmt.Errorf("readfile: %w", err)
+		return Config{}, fmt.Errorf("readfile: %w", err)
 	}
 
+	root, err = filepath.Abs(root)
+	if err != nil {
+		return Config{}, fmt.Errorf("abs: %w", err)
+	}
+
+	c := defaultConfig(root)
 	err = yaml.Unmarshal(b, &c)
 	if err != nil {
 		return c, fmt.Errorf("unmarshal: %w", err)

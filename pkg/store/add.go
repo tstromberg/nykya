@@ -11,9 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tstromberg/nykya/pkg/nykya"
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
+
+	"github.com/tstromberg/nykya/pkg/nykya"
 )
 
 // AddOptions are options that can be passed to the add command
@@ -50,9 +51,6 @@ func Add(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	klog.Infof("addNote %+v", opts)
 
-	words := strings.Split(strings.ToLower(opts.Content), " ")
-	slug := strings.Join(words[0:3], "-")
-
 	i := nykya.RawItem{
 		FrontMatter: nykya.FrontMatter{
 			Kind:   opts.Kind,
@@ -63,12 +61,24 @@ func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		Format:  nykya.Markdown,
 	}
 
-	od, err := inDir(dc, i.FrontMatter)
+	in, err := inDir(dc, i.FrontMatter)
 	if err != nil {
 		return fmt.Errorf("out dir(%+v): %w", i, err)
 	}
-	i.Path = filepath.Join(od, slug+".md")
-	return saveRawItem(ctx, dc, i)
+
+	if i.Content == "" {
+		i, err = openEditor(ctx, dc, i)
+		if err != nil {
+			return fmt.Errorf("openEditor: %w", err)
+		}
+	}
+
+	slug, err := slugify(i.Content)
+	if err != nil {
+		return fmt.Errorf("slugify: %w", err)
+	}
+	i.Path = filepath.Join(in, fmt.Sprintf("%s.md", slug))
+	return saveRawItem(ctx, dc, i, i.Path)
 }
 
 func extForFormat(f string) string {
@@ -125,11 +135,11 @@ func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		Path:    path,
 		Format:  formatForPath(opts.Source),
 	}
-	return saveRawItem(ctx, dc, i)
+	return saveRawItem(ctx, dc, i, i.Path)
 }
 
 // saveRawItem saves an item to disk
-func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem) error {
+func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem, path string) error {
 	klog.Infof("marshalling: %+v", i)
 	b, err := yaml.Marshal(i.FrontMatter)
 	if err != nil {
@@ -137,7 +147,7 @@ func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem) error {
 	}
 	klog.Infof(string(b))
 
-	dir := filepath.Dir(i.Path)
+	dir := filepath.Dir(path)
 	if _, err := os.Stat(dir); err != nil {
 		klog.Infof("Creating %s ...", dir)
 		err := os.MkdirAll(dir, 0600)
@@ -146,8 +156,8 @@ func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem) error {
 		}
 	}
 
-	fmt.Printf("Writing to %s ...", i.Path)
-	f, err := os.Create(i.Path)
+	klog.Infof("Writing item to %s ...", path)
+	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}

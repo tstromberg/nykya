@@ -10,7 +10,7 @@ import (
 
 type addCmd struct {
 	Kind    string `arg required help:"Type of object to add"`
-	Content string `arg required help:"Content to add"`
+	Content string `arg optional help:"Content to add"`
 
 	Title string `help:"Set a title for the post"`
 }

@@ -11,6 +11,9 @@ const JPEG = "jpeg"
 
 // MarkdownSeparator separates YAML documents
 const MarkdownSeparator = "\n---\n"
-const MarkdownSeparatorAlt = "\n---\n"
+
+// HTMLBegin is what HTML frontmatter uses to begin
 const HTMLBegin = "<!--"
+
+// HTMLSeparator is what HTML frontmatter uses to end
 const HTMLSeparator = "-->"

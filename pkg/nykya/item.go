@@ -4,14 +4,17 @@ import (
 	"time"
 )
 
+// YAMLTime is time serializable to frontmatter
 type YAMLTime struct {
 	time.Time
 }
 
+// MarshalYAML marshals time into RFC 1123
 func (yt YAMLTime) MarshalYAML() (interface{}, error) {
 	return yt.Format(time.RFC1123Z), nil
 }
 
+// UnmarshalYAML unmarshals RFC1123 or Y-M-D timestamps to time.Time
 func (yt YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	err := unmarshal(&s)
@@ -30,6 +33,7 @@ func (yt YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// NewYAMLTime returns a populated YAMLTime object
 func NewYAMLTime(t time.Time) YAMLTime {
 	return YAMLTime{t}
 }
@@ -43,7 +47,7 @@ type FrontMatter struct {
 	Draft bool
 
 	// Posted is when was the content posted
-	Posted YAMLTime `yaml:`
+	Posted YAMLTime
 
 	// Title is a title of this post. (optional)
 	Title string `yaml:",omitempty"`

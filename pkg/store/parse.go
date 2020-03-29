@@ -148,7 +148,7 @@ func fromDirectory(path string, root string) ([]*nykya.RawItem, error) {
 	var ps []*nykya.RawItem
 	for _, f := range fs {
 		if f.IsDir() {
-			dirRawItems, err := fromDirectory(filepath.Join(root, path, f.Name()), root)
+			dirRawItems, err := fromDirectory(filepath.Join(path, f.Name()), root)
 			if err != nil {
 				klog.Warningf("from dir %s: %v", f.Name(), err)
 			}
