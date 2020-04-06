@@ -13,7 +13,7 @@ import (
 )
 
 type devCmd struct {
-	Port int `help:"Set a port TCP number"`
+	Port int `default:32080 help:"Set a port TCP number"`
 }
 
 func renderLoop(ctx context.Context, dc nykya.Config) error {
@@ -45,7 +45,7 @@ func (c *devCmd) Run(globals *Globals) error {
 	}
 
 	ctx := context.Background()
-	items, err := store.Scan(ctx, dc.Root)
+	items, err := store.Scan(ctx, dc.In)
 	if err != nil {
 		return fmt.Errorf("scan: %w", err)
 	}
