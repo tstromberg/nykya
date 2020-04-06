@@ -25,6 +25,7 @@ type AddOptions struct {
 	Content string
 	Kind    string
 	Source  string
+	Format  string
 
 	Timestamp time.Time
 }
@@ -60,11 +61,7 @@ func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		Content: opts.Content,
 		Format:  nykya.Markdown,
 	}
-
-	in, err := inDir(dc, i.FrontMatter)
-	if err != nil {
-		return fmt.Errorf("out dir(%+v): %w", i, err)
-	}
+	var err error
 
 	if i.Content == "" {
 		i, err = openEditor(ctx, dc, i)
@@ -73,11 +70,12 @@ func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		}
 	}
 
-	slug, err := slugify(i.Content)
+	in, err := calculateInputHierarchy(dc, i.FrontMatter)
 	if err != nil {
-		return fmt.Errorf("slugify: %w", err)
+		return fmt.Errorf("out dir(%+v): %w", i, err)
 	}
-	i.Path = filepath.Join(in, fmt.Sprintf("%s.md", slug))
+
+	i.Path = filepath.Join(in, fmt.Sprintf("%s.md", slugify(i.Content)))
 	return saveRawItem(ctx, dc, i, i.Path)
 }
 
@@ -110,31 +108,52 @@ func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	// The file may, or may not exist.
 	klog.Infof("addPost %+v", opts)
 
-	if opts.Source == "" {
-		return fmt.Errorf("no path specified")
-	}
-
-	fm := nykya.FrontMatter{
-		Kind:   opts.Kind,
-		Posted: nykya.NewYAMLTime(opts.Timestamp),
-		Source: opts.Source,
-	}
-
-	path := opts.Source
-	// Not right.. filepath.Rel?
-	if strings.HasPrefix(dc.Out, path) {
-		od, err := inDir(dc, fm)
-		if err != nil {
-			return fmt.Errorf("out dir: %w", err)
-		}
-		path = filepath.Join(od, filepath.Base(opts.Source))
-	}
-
 	i := nykya.RawItem{
+		FrontMatter: nykya.FrontMatter{
+			Kind:   opts.Kind,
+			Posted: nykya.NewYAMLTime(opts.Timestamp),
+			Source: opts.Source,
+		},
 		Content: opts.Content,
-		Path:    path,
-		Format:  formatForPath(opts.Source),
+		Path:    opts.Source,
+		Format:  opts.Format,
 	}
+	var err error
+
+	baseName := filepath.Base(i.Path)
+	klog.Infof("post path=%q", i.Path)
+	if i.Path == "" {
+		if i.Format == "" {
+			i.Format = nykya.Markdown
+		}
+
+		i, err = openEditor(ctx, dc, i)
+		if err != nil {
+			return fmt.Errorf("openEditor: %w", err)
+		}
+		baseName = fmt.Sprintf("%s.md", slugify(i.FrontMatter.Title))
+	} else {
+		i.Format = formatForPath(i.Path)
+	}
+
+	/*
+		// Not right.. filepath.Rel?
+		if strings.HasPrefix(dc.Out, i.Path) {
+			od, err := calculateInputHierarchy(dc, i.Path)
+			if err != nil {
+				return fmt.Errorf("out dir: %w", err)
+			}
+			path = filepath.Join(od, filepath.Base(opts.Source))
+		}
+	*/
+
+	in, err := calculateInputHierarchy(dc, i.FrontMatter)
+	if err != nil {
+		return fmt.Errorf("out dir(%+v): %w", i, err)
+	}
+	i.Path = filepath.Join(in, baseName)
+	klog.Infof("in=%q, baseName=%q, i.Path=%q", in, baseName, i.Path)
+
 	return saveRawItem(ctx, dc, i, i.Path)
 }
 
@@ -173,13 +192,13 @@ func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem, path str
 	}
 }
 
-// inDir calculates the input directory for a file
-func inDir(dc nykya.Config, fm nykya.FrontMatter) (string, error) {
+// calculateInputHierarchy calculates the input directory for a file
+func calculateInputHierarchy(dc nykya.Config, fm nykya.FrontMatter) (string, error) {
 	tmpl := dc.Organization[fm.Kind]
 	if tmpl == "" {
 		tmpl = nykya.DefaultOrganization
 	}
-	klog.Infof("inDir for %s: root=%q in=%q tmpl=%q", fm.Kind, dc.Root, dc.In, tmpl)
+	klog.Infof("calculateInputHierarchy for %s: root=%q in=%q tmpl=%q", fm.Kind, dc.Root, dc.In, tmpl)
 
 	t, err := template.New("orgtmpl").Parse(tmpl)
 	if err != nil {

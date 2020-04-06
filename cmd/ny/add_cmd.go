@@ -11,6 +11,7 @@ import (
 type addCmd struct {
 	Kind    string `arg required help:"Type of object to add"`
 	Content string `arg optional help:"Content to add"`
+	Format  string `arg optional help:"Format of content (default is auto-detect)"`
 
 	Title string `help:"Set a title for the post"`
 }
@@ -26,6 +27,7 @@ func (a *addCmd) Run(globals *Globals) error {
 		Root:      globals.Root,
 		Title:     a.Title,
 		Kind:      a.Kind,
+		Format:    a.Format,
 		Timestamp: time.Now(),
 	})
 }

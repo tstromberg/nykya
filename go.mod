@@ -6,6 +6,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/alecthomas/kong v0.2.4
 	github.com/anthonynsimon/bild v0.11.1
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/otiai10/copy v1.1.1
 	github.com/rjeczalik/notify v0.9.2

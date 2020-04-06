@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -13,12 +12,16 @@ import (
 )
 
 // slugRemove is chars to be removed from slug calculation
-var slugRemove = regexp.MustCompile(`[^a-z0-9 -]`)
+var slugRemove = regexp.MustCompile(`[^a-zA-Z0-9 -]`)
 
 // slugReplace are chars that become spaces
 var slugReplace = regexp.MustCompile(`\s+`)
 
-func slugify(in string) (string, error) {
+// maxSlugWords is how many words to consider when sluggin'
+var maxSlugWords = 5
+
+func slugify(in string) string {
+	klog.Infof("slugify: %q", in)
 
 	// TODO: does not work for umlauts yet?
 	loose := precis.NewIdentifier(
@@ -41,11 +44,11 @@ func slugify(in string) (string, error) {
 
 	words := strings.Split(strings.ToLower(p), " ")
 	slug := strings.Join(words[0:len(words)], "-")
-	if len(words) > 3 {
-		slug = strings.Join(words[0:3], "-")
+	if len(words) > maxSlugWords {
+		slug = strings.Join(words[0:maxSlugWords], "-")
 	}
 	if slug == "" {
-		return "", fmt.Errorf("unable to calculate slug from content: %q", in)
+		return "untitled"
 	}
-	return slug, nil
+	return slug
 }

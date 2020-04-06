@@ -14,18 +14,20 @@
 
     </head>
     <body>
-        <main>
-            <!-- content block -->
-            {{template "content" .}}
-            <!-- /content block -->
-        </main>
+        <div class="container">
+            <main>
+                <!-- content block -->
+                {{template "content" .}}
+                <!-- /content block -->
+            </main>
 
-        <footer>
-            <!-- footer block -->
-            {{block "footer" .}} {{end}}
-            <!-- /footer block -->
-        </footer>
-        
+            <footer>
+                <!-- footer block -->
+                {{block "footer" .}} {{end}}
+                <!-- /footer block -->
+            </footer>
+        </div>
+
         <!-- js block -->
         {{block "js" .}} {{end}}
         <!-- /js block -->

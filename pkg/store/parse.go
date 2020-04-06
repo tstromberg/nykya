@@ -165,6 +165,13 @@ func fromDirectory(path string, root string) ([]*nykya.RawItem, error) {
 		}
 
 		i, err := fromFile(fp)
+		if err != nil {
+			return ps, fmt.Errorf("from file %q: %w", fp, err)
+		}
+		if i == nil {
+			return ps, fmt.Errorf("%q could not be parsed", fp)
+		}
+
 		if i.FrontMatter.Kind == "" {
 			klog.Errorf("%s has no kind: %+v", fp, i)
 			continue
