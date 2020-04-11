@@ -9,11 +9,10 @@ import (
 )
 
 type addCmd struct {
-	Kind    string `arg required help:"Type of object to add"`
-	Content string `arg optional help:"Content to add"`
-	Format  string `arg optional help:"Format of content (default is auto-detect)"`
-
-	Title string `help:"Set a title for the post"`
+	Kind    string   `arg required help:"Type of object to add"`
+	Title   string   `optional help:"Title of object"`
+	Format  string   `optional help:"Format of content (default is auto-detect)"`
+	Content []string `arg name:"content" help:"Content to add"`
 }
 
 func (a *addCmd) Run(globals *Globals) error {
@@ -22,12 +21,18 @@ func (a *addCmd) Run(globals *Globals) error {
 		return err
 	}
 
-	return store.Add(context.Background(), dc, store.AddOptions{
-		Content:   a.Content,
-		Root:      globals.Root,
-		Title:     a.Title,
-		Kind:      a.Kind,
-		Format:    a.Format,
-		Timestamp: time.Now(),
-	})
+	for _, c := range a.Content {
+		err := store.Add(context.Background(), dc, store.AddOptions{
+			Content:   c,
+			Root:      globals.Root,
+			Title:     a.Title,
+			Kind:      a.Kind,
+			Format:    a.Format,
+			Timestamp: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

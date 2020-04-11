@@ -1,0 +1,32 @@
+{{template "base" .}}
+
+{{ define "title" }}{{ .Title }}{{ end }}
+
+{{ define "headers" }}
+  <link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
+  <meta name=viewport content="width=device-width, initial-scale=1"/>
+{{ end }}
+
+{{ define "content" }}
+ <h1>{{ .Title }}</h1>
+  <ul> 
+  {{ range .Rendered }}
+    <li itemprop="headline">
+        <i>{{ .RawItem.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
+        {{ if eq .RawItem.FrontMatter.Kind "thought" }}
+            {{ .RawItem.Content }}
+        {{ if eq .RawItem.FrontMatter.Kind "post" }}
+            <a href="{{ .URL }}">{{ .RawItem.FrontMatter.Title }}</a>
+        {{ end }}
+        <!-- {{ .RawItem.FrontMatter.Kind }}: {{ .RawItem.Path }}-->
+        </li>
+  {{ end }}
+  </ul>
+
+  <section id="dailyphotos">
+    {{ if eq .RawItem.FrontMatter.Kind "image" }}
+      <div id="dailyphoto"><a href="{{ .URL }}"><img src="{{ $t := index .Thumbs "128t" }}{{ $t.Path }}"/ ></a></div>
+    {{ end }}
+  </section>
+
+{{ end }}

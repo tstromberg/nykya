@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,8 +44,10 @@ func Add(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		return addThought(ctx, dc, opts)
 	case "post":
 		return addPost(ctx, dc, opts)
+	case "image":
+		return addImage(ctx, dc, opts)
 	default:
-		return fmt.Errorf("unknown object type: %q", opts.Kind)
+		return fmt.Errorf("object type not in 'thought' or 'post': %q", opts.Kind)
 	}
 }
 
@@ -97,8 +100,10 @@ func formatForPath(path string) string {
 		return nykya.Markdown
 	case ".html":
 		return nykya.HTML
+	case ".jpeg", ".jpg":
+		return nykya.JPEG
 	default:
-		return ext
+		return strings.Replace(ext, ".", "", 1)
 	}
 }
 
@@ -136,17 +141,6 @@ func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		i.Format = formatForPath(i.Path)
 	}
 
-	/*
-		// Not right.. filepath.Rel?
-		if strings.HasPrefix(dc.Out, i.Path) {
-			od, err := calculateInputHierarchy(dc, i.Path)
-			if err != nil {
-				return fmt.Errorf("out dir: %w", err)
-			}
-			path = filepath.Join(od, filepath.Base(opts.Source))
-		}
-	*/
-
 	in, err := calculateInputHierarchy(dc, i.FrontMatter)
 	if err != nil {
 		return fmt.Errorf("out dir(%+v): %w", i, err)
@@ -157,26 +151,54 @@ func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	return saveRawItem(ctx, dc, i, i.Path)
 }
 
+// addImage is for adding an image
+func addImage(ctx context.Context, dc nykya.Config, opts AddOptions) error {
+	klog.Infof("addImage %+v", opts)
+
+	i := nykya.RawItem{
+		FrontMatter: nykya.FrontMatter{
+			Kind:   opts.Kind,
+			Posted: nykya.NewYAMLTime(opts.Timestamp),
+			Source: opts.Source,
+		},
+		Path:   opts.Content,
+		Format: opts.Format,
+	}
+
+	var err error
+
+	baseName := filepath.Base(i.Path)
+	klog.Infof("image path=%q", i.Path)
+	i.Format = formatForPath(i.Path)
+	in, err := calculateInputHierarchy(dc, i.FrontMatter)
+	if err != nil {
+		return fmt.Errorf("out dir(%+v): %w", i, err)
+	}
+	i.Path = filepath.Join(in, baseName)
+	klog.Infof("in=%q, baseName=%q, i.Path=%q", in, baseName, i.Path)
+	return saveRawItem(ctx, dc, i, i.Path)
+}
+
 // saveRawItem saves an item to disk
-func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem, path string) error {
+func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem, itemPath string) error {
 	klog.Infof("marshalling: %+v", i)
-	b, err := yaml.Marshal(i.FrontMatter)
+	fm, err := yaml.Marshal(i.FrontMatter)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
-	klog.Infof(string(b))
 
-	dir := filepath.Dir(path)
+	dir := filepath.Dir(itemPath)
+
 	if _, err := os.Stat(dir); err != nil {
-		klog.Infof("Creating %s ...", dir)
+		klog.Infof("mkdir %s ...", dir)
 		err := os.MkdirAll(dir, 0600)
 		if err != nil {
 			klog.Errorf("mkdir(%s) failed: %v", dir, err)
 		}
 	}
 
-	klog.Infof("Writing item to %s ...", path)
-	f, err := os.Create(path)
+	klog.Infof("Creating %s ...", itemPath)
+	f, err := os.Create(itemPath)
 	if err != nil {
 		return fmt.Errorf("create: %w", err)
 	}
@@ -184,9 +206,11 @@ func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem, path str
 
 	switch i.Format {
 	case nykya.Markdown:
-		return saveMarkdown(f, b, i.Content)
+		return saveMarkdown(f, fm, i.Content)
 	case nykya.HTML:
-		return saveHTML(f, b, i.Content)
+		return saveHTML(f, fm, i.Content)
+	case nykya.JPEG:
+		return saveJPEG(f, fm, i.Path, itemPath+".yaml")
 	default:
 		return fmt.Errorf("unknown format: %s", i.Format)
 	}
@@ -226,5 +250,28 @@ func saveHTML(w io.Writer, bs []byte, content string) error {
 	w.Write(bs)
 	io.WriteString(w, nykya.HTMLSeparator)
 	_, err := io.WriteString(w, content)
+	return err
+}
+
+func saveJPEG(w io.Writer, bs []byte, src string, sidecar string) error {
+	content, err := ioutil.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("readfile: %w", err)
+	}
+
+	if _, err := w.Write(content); err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+
+	klog.Infof("creating sidecar: %s", sidecar)
+	f, err := os.Create(sidecar)
+	if err != nil {
+		return fmt.Errorf("create: %w", err)
+	}
+
+	// TODO: check err
+	defer f.Close()
+
+	_, err = f.Write(bs)
 	return err
 }
