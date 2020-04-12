@@ -15,12 +15,20 @@
     </head>
     <body>
         <div class="container">
-            <main>
-                <!-- content block -->
-                {{template "content" .}}
-                <!-- /content block -->
-            </main>
+            <header>
+                {{ block "header" .}}{{ end }}
+            </header>
 
+            <main>
+                <section id="content">
+                    {{ block "content" .}} {{end}}
+                </section>
+
+                <section id="side">
+                    {{ block "side" .}}{{ end }}
+                </section>
+            </main>
+        
             <footer>
                 <!-- footer block -->
                 {{block "footer" .}} {{end}}

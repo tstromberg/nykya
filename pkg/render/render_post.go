@@ -45,7 +45,7 @@ func markdownContent(in string) (string, error) {
 	return buf.String(), nil
 }
 
-func post(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
+func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
 	ext := filepath.Ext(i.ContentPath)
 	outPath := strings.Replace(i.ContentPath, ext, ".html", 1)
 

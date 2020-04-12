@@ -115,9 +115,9 @@ func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*Re
 	klog.Infof("render: %s (%s)", i.ContentPath, i.FrontMatter.Kind)
 	switch i.FrontMatter.Kind {
 	case "image":
-		return image(ctx, dc, i)
+		return renderImage(ctx, dc, i)
 	case "post":
-		return post(ctx, dc, i)
+		return renderPost(ctx, dc, i)
 	default:
 		return &RenderedItem{
 			Input:   i,

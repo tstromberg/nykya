@@ -1,48 +1,68 @@
 {{define "style"}}
-    <style>
-    body {
-        font-size: 120%;
-    }
+<style>
 
-    h1, h2, h3, h4 {
-        font-family: sans-serif;
-    }
-    
-    pre {
-        overflow-x: auto;
-        font-size: 90%;
-    }
-    
-    blockquote {
-        margin: 10px;
-        border-left: 3px solid #eee;
-        padding-left: 15px;
-        color: #333;
-    }
-    
-    @media screen and (min-width: 15cm) {
-        body {
-            max-width: 40em;
-            padding-left: 8mm;
-            padding-right: 8mm;
-        }
-    }
-    
-    hr {
-        border: none;
-        height: 1px;
-        background-color: lightgray;
-        margin-top: 5mm;
-        margin-bottom: 8mm;
-    }
+body {
+    font-size: 120%;
+    margin: 0;
+    padding: 0;
+}
 
-    footer {
-        margin-top: 2em;
-        text-align: right;
-        font-family: monospace;
-        border-top: 1px solid #CCC;
-        padding: 1em;
-    }
-    
-    </style>
+header {
+    text-align: right;
+    font-family: monospace;
+    padding: 1em;
+    color: #999;
+}
+
+main {
+    display: flex;
+}
+
+#content {
+    padding-left: 8mm;
+    padding-right: 8mm;
+    flex-basis: 60em;
+}
+
+#side {
+    background-color: #212121;
+    flex-basis: 800px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding: 4px;
+}
+
+#side img {
+    margin: 2px;
+}
+
+.daily {
+    display: inline-block;
+}
+
+h1, h2, h3, h4 {
+    font-family: sans-serif;
+}
+
+pre {
+    overflow-x: auto;
+    font-size: 90%;
+}
+
+blockquote {
+    margin: 10px;
+    border-left: 3px solid #eee;
+    padding-left: 15px;
+    color: #333;
+}
+
+
+footer {
+    margin-top: 2em;
+    text-align: right;
+    font-family: monospace;
+    padding: 1em;
+}
+
+</style>
 {{ end }}

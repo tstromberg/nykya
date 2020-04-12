@@ -8,6 +8,10 @@
 {{ end }}
 
 
+{{ define "header" }}
+ts
+{{ end }}
+
 {{ define "content" }}
  <h1>{{ .Title }}</h1>
   <ul> 
@@ -28,20 +32,16 @@
       <!-- {{ .Input.FrontMatter.Kind }}: {{ .Input.ContentPath }}-->
   {{ end }}
   </ul>
+{{ end }}
 
-
+{{ define "side" }}
   <section id="dailyphotos">
-    daily
+    <!-- room for dynamic scaling algo -->
     {{ range .Rendered }}
       {{ if eq .Input.FrontMatter.Kind "image" }}
-        image
-        <div id="dailyphoto">
-          {{ $t := index .Thumbs "100w" }}
-          <a href="{{ .URL }}"><img src="{{ $t.Src }}" /></a>
-        </div>
+        {{ $t := index .Thumbs "133t" }}
+        <div class="daily"><a href="{{ .URL }}"><img src="{{ $t.Src }}" /></a></div>
       {{ end }}
     {{ end }}
   </section>
-
-
 {{ end }}
