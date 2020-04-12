@@ -4,12 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
-	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -20,14 +15,15 @@ import (
 
 // AddOptions are options that can be passed to the add command
 type AddOptions struct {
-	Root string
-
-	Title   string
+	// Title is the title of the post
+	Title string
+	// Content is the content: may be a string or filename
 	Content string
-	Kind    string
-	Source  string
-	Format  string
-
+	// Kind is the kind of content (thought, post, image)
+	Kind string
+	// Format is the format of the content (JPEG, HTML, etc)
+	Format string
+	// Timestamp is when the content was posted
 	Timestamp time.Time
 }
 
@@ -37,7 +33,6 @@ func Add(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	if ts.IsZero() {
 		ts = time.Now()
 	}
-	klog.Infof("adding %q to %s, ts=%s opts=%+v", opts.Content, opts.Root, ts, opts)
 
 	switch opts.Kind {
 	case "thought":
@@ -51,227 +46,73 @@ func Add(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	}
 }
 
-// add is for adding thoughts
-func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
-	klog.Infof("addNote %+v", opts)
-
-	i := nykya.RawItem{
-		FrontMatter: nykya.FrontMatter{
-			Kind:   opts.Kind,
-			Posted: nykya.NewYAMLTime(opts.Timestamp),
-			Source: opts.Source,
-		},
-		Content: opts.Content,
-		Format:  nykya.Markdown,
-	}
-	var err error
-
-	if i.Content == "" {
-		i, err = openEditor(ctx, dc, i)
+// saveItem save an item and all dependencies to disk (sidecars, images)
+func saveItem(ctx context.Context, dc nykya.Config, i nykya.RenderInput, path string) error {
+	// Save a local copy of non-inlined content
+	if i.Inline == "" && i.FrontMatter.Origin != "" {
+		relPath, err := localCopy(dc, i.FrontMatter)
 		if err != nil {
-			return fmt.Errorf("openEditor: %w", err)
+			return fmt.Errorf("local copy: %w", err)
 		}
+		i.ContentPath = relPath
 	}
 
-	in, err := calculateInputHierarchy(dc, i.FrontMatter)
-	if err != nil {
-		return fmt.Errorf("out dir(%+v): %w", i, err)
-	}
-
-	i.Path = filepath.Join(in, fmt.Sprintf("%s.md", slugify(i.Content)))
-	return saveRawItem(ctx, dc, i, i.Path)
-}
-
-func extForFormat(f string) string {
-	switch f {
-	case nykya.Markdown:
-		return ".md"
-	case nykya.HTML:
-		return ".html"
-	default:
-		return "." + strings.ToLower(f)
-	}
-}
-
-func formatForPath(path string) string {
-	ext := strings.ToLower(filepath.Ext(path))
-	switch ext {
-	case ".md":
-		return nykya.Markdown
-	case ".html":
-		return nykya.HTML
-	case ".jpeg", ".jpg":
-		return nykya.JPEG
-	default:
-		return strings.Replace(ext, ".", "", 1)
-	}
-}
-
-// addPost is for adding a post
-func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
-	// A post can be markdown, or HTML.
-	// The file may, or may not exist.
-	klog.Infof("addPost %+v", opts)
-
-	i := nykya.RawItem{
-		FrontMatter: nykya.FrontMatter{
-			Kind:   opts.Kind,
-			Posted: nykya.NewYAMLTime(opts.Timestamp),
-			Source: opts.Source,
-		},
-		Content: opts.Content,
-		Path:    opts.Source,
-		Format:  opts.Format,
-	}
-	var err error
-
-	baseName := filepath.Base(i.Path)
-	klog.Infof("post path=%q", i.Path)
-	if i.Path == "" {
-		if i.Format == "" {
-			i.Format = nykya.Markdown
-		}
-
-		i, err = openEditor(ctx, dc, i)
-		if err != nil {
-			return fmt.Errorf("openEditor: %w", err)
-		}
-		baseName = fmt.Sprintf("%s.md", slugify(i.FrontMatter.Title))
-	} else {
-		i.Format = formatForPath(i.Path)
-	}
-
-	in, err := calculateInputHierarchy(dc, i.FrontMatter)
-	if err != nil {
-		return fmt.Errorf("out dir(%+v): %w", i, err)
-	}
-	i.Path = filepath.Join(in, baseName)
-	klog.Infof("in=%q, baseName=%q, i.Path=%q", in, baseName, i.Path)
-
-	return saveRawItem(ctx, dc, i, i.Path)
-}
-
-// addImage is for adding an image
-func addImage(ctx context.Context, dc nykya.Config, opts AddOptions) error {
-	klog.Infof("addImage %+v", opts)
-
-	i := nykya.RawItem{
-		FrontMatter: nykya.FrontMatter{
-			Kind:   opts.Kind,
-			Posted: nykya.NewYAMLTime(opts.Timestamp),
-			Source: opts.Source,
-		},
-		Path:   opts.Content,
-		Format: opts.Format,
-	}
-
-	var err error
-
-	baseName := filepath.Base(i.Path)
-	klog.Infof("image path=%q", i.Path)
-	i.Format = formatForPath(i.Path)
-	in, err := calculateInputHierarchy(dc, i.FrontMatter)
-	if err != nil {
-		return fmt.Errorf("out dir(%+v): %w", i, err)
-	}
-	i.Path = filepath.Join(in, baseName)
-	klog.Infof("in=%q, baseName=%q, i.Path=%q", in, baseName, i.Path)
-	return saveRawItem(ctx, dc, i, i.Path)
-}
-
-// saveRawItem saves an item to disk
-func saveRawItem(ctx context.Context, dc nykya.Config, i nykya.RawItem, itemPath string) error {
 	klog.Infof("marshalling: %+v", i)
+
 	fm, err := yaml.Marshal(i.FrontMatter)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	dir := filepath.Dir(itemPath)
-
-	if _, err := os.Stat(dir); err != nil {
-		klog.Infof("mkdir %s ...", dir)
-		err := os.MkdirAll(dir, 0600)
-		if err != nil {
-			klog.Errorf("mkdir(%s) failed: %v", dir, err)
-		}
-	}
-
-	klog.Infof("Creating %s ...", itemPath)
-	f, err := os.Create(itemPath)
-	if err != nil {
-		return fmt.Errorf("create: %w", err)
-	}
-	defer f.Close()
-
 	switch i.Format {
 	case nykya.Markdown:
-		return saveMarkdown(f, fm, i.Content)
+		return saveMarkdown(path, fm, i.Inline)
 	case nykya.HTML:
-		return saveHTML(f, fm, i.Content)
+		return saveHTML(path, fm, i.Inline)
 	case nykya.JPEG:
-		return saveJPEG(f, fm, i.Path, itemPath+".yaml")
+		return saveJPEG(path, fm)
 	default:
 		return fmt.Errorf("unknown format: %s", i.Format)
 	}
 }
 
-// calculateInputHierarchy calculates the input directory for a file
-func calculateInputHierarchy(dc nykya.Config, fm nykya.FrontMatter) (string, error) {
-	tmpl := dc.Organization[fm.Kind]
-	if tmpl == "" {
-		tmpl = nykya.DefaultOrganization
-	}
-	klog.Infof("calculateInputHierarchy for %s: root=%q in=%q tmpl=%q", fm.Kind, dc.Root, dc.In, tmpl)
+func saveMarkdown(path string, fm []byte, content string) error {
+	b := bytes.NewBuffer(fm)
 
-	t, err := template.New("orgtmpl").Parse(tmpl)
+	_, err := b.WriteString(nykya.MarkdownSeparator)
 	if err != nil {
-		return "", fmt.Errorf("parsing %q: %w", tmpl, err)
+		return err
 	}
 
-	var b bytes.Buffer
-	err = t.Execute(&b, fm)
+	_, err = b.WriteString(content)
 	if err != nil {
-		return "", fmt.Errorf("execute: %w", err)
+		return err
 	}
 
-	return filepath.Join(dc.In, b.String()), nil
+	return ioutil.WriteFile(path, b.Bytes(), 0644)
 }
 
-func saveMarkdown(w io.Writer, bs []byte, content string) error {
-	w.Write(bs)
-	io.WriteString(w, nykya.MarkdownSeparator)
-	_, err := io.WriteString(w, content)
-	return err
+func saveHTML(path string, fm []byte, content string) error {
+	b := bytes.NewBuffer([]byte(nykya.HTMLBegin))
+
+	_, err := b.Write(fm)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.WriteString(nykya.HTMLSeparator)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.WriteString(content)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(path, b.Bytes(), 0644)
 }
 
-func saveHTML(w io.Writer, bs []byte, content string) error {
-	io.WriteString(w, nykya.HTMLBegin)
-	w.Write(bs)
-	io.WriteString(w, nykya.HTMLSeparator)
-	_, err := io.WriteString(w, content)
-	return err
-}
-
-func saveJPEG(w io.Writer, bs []byte, src string, sidecar string) error {
-	content, err := ioutil.ReadFile(src)
-	if err != nil {
-		return fmt.Errorf("readfile: %w", err)
-	}
-
-	if _, err := w.Write(content); err != nil {
-		return fmt.Errorf("write: %w", err)
-	}
-
-	klog.Infof("creating sidecar: %s", sidecar)
-	f, err := os.Create(sidecar)
-	if err != nil {
-		return fmt.Errorf("create: %w", err)
-	}
-
-	// TODO: check err
-	defer f.Close()
-
-	_, err = f.Write(bs)
-	return err
+func saveJPEG(path string, fm []byte) error {
+	return ioutil.WriteFile(path+".yaml", fm, 0644)
 }

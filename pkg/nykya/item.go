@@ -38,7 +38,7 @@ func NewYAMLTime(t time.Time) YAMLTime {
 	return YAMLTime{t}
 }
 
-// FrontMatter is what gets stored in the header of an item (or in YAML sidecar)
+// FrontMatter is metadata about an item saved to disk
 type FrontMatter struct {
 	// Kind is what kind of post this is. See ValidKinds (required)
 	Kind string
@@ -55,19 +55,18 @@ type FrontMatter struct {
 	// Description is a short description of the post. (optional)
 	Description string `yaml:",omitempty"`
 
-	// Source is where the post content originated from
-	Source string `yaml:",omitempty"`
+	// Origin is where the post content originated from
+	Origin string `yaml:",omitempty"`
 }
 
-// RawItem is a post to be rendered
-type RawItem struct {
+// RenderInput is ephemeral metadata for a post to be rendered
+type RenderInput struct {
 	FrontMatter FrontMatter
-	// Content is inline content
-	Content string
-	// Path is where the input is saved on disk
-	Path string
-	// RelPath is where the item was found relative to the input directory
-	RelPath string
-	// Format is the format to store in
+	// Inline is inline content
+	Inline string
+	// ContentPath is relative path to content (not the sidecar)
+	ContentPath string
+
+	// Format is the format of the content
 	Format string
 }

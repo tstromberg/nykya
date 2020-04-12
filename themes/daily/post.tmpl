@@ -1,6 +1,6 @@
 {{template "base" .}}
 
-{{ define "title" }}{{ .RawItem.FrontMatter.Title }}{{ end }}
+{{ define "title" }}{{ .Input.FrontMatter.Title }}{{ end }}
 
 {{ define "headers" }}
   <link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
@@ -8,11 +8,11 @@
 {{ end }}
 
 {{ define "content" }}
-  <h1>{{ .RawItem.FrontMatter.Title }}</h1>
+  <h1>{{ .Input.FrontMatter.Title }}</h1>
 
-  <p><em>{{ .RawItem.FrontMatter.Posted.Format "2006-01-02"}}</em></p>
+  <p><em>{{ .Input.FrontMatter.Posted.Format "2006-01-02"}}</em></p>
 
-  <p>{{ .RawItem.FrontMatter.Description }}</p>
+  <p>{{ .Input.FrontMatter.Description }}</p>
 
   {{ .Content }}
 {{ end }}

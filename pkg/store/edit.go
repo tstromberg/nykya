@@ -24,16 +24,16 @@ func editorCmd(ctx context.Context, dc nykya.Config, goos string, path string) *
 	return exec.Command(editor, path)
 }
 
-func openEditor(ctx context.Context, dc nykya.Config, i nykya.RawItem) (nykya.RawItem, error) {
-	ni := nykya.RawItem{}
+func openEditor(ctx context.Context, dc nykya.Config, i nykya.RenderInput) (nykya.RenderInput, error) {
+	ni := nykya.RenderInput{}
 	copier.Copy(i, ni)
 
 	tf, err := ioutil.TempFile("", fmt.Sprintf("*%s", extForFormat(i.Format)))
 	if err != nil {
 		return ni, fmt.Errorf("tempfile: %w", err)
 	}
-	if err := saveRawItem(ctx, dc, i, tf.Name()); err != nil {
-		return ni, fmt.Errorf("saveRawItem: %w", err)
+	if err := saveItem(ctx, dc, i, tf.Name()); err != nil {
+		return ni, fmt.Errorf("saveItem: %w", err)
 	}
 	tf.Close()
 

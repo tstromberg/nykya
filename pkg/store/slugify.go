@@ -43,7 +43,7 @@ func slugify(in string) string {
 	p = slugReplace.ReplaceAllString(p, " ")
 
 	words := strings.Split(strings.ToLower(p), " ")
-	slug := strings.Join(words[0:len(words)], "-")
+	slug := strings.Join(words, "-")
 	if len(words) > maxSlugWords {
 		slug = strings.Join(words[0:maxSlugWords], "-")
 	}

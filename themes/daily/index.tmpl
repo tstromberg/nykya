@@ -7,26 +7,41 @@
   <meta name=viewport content="width=device-width, initial-scale=1"/>
 {{ end }}
 
+
 {{ define "content" }}
  <h1>{{ .Title }}</h1>
   <ul> 
   {{ range .Rendered }}
-    <li itemprop="headline">
-        <i>{{ .RawItem.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
-        {{ if eq .RawItem.FrontMatter.Kind "thought" }}
-            {{ .RawItem.Content }}
-        {{ if eq .RawItem.FrontMatter.Kind "post" }}
-            <a href="{{ .URL }}">{{ .RawItem.FrontMatter.Title }}</a>
-        {{ end }}
-        <!-- {{ .RawItem.FrontMatter.Kind }}: {{ .RawItem.Path }}-->
+      {{ if eq .Input.FrontMatter.Kind "thought" }}
+        <li itemprop="headline">
+        <i>{{ .Input.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
+          {{ .Input.Content }}
         </li>
+      {{ end }}
+      {{ if eq .Input.FrontMatter.Kind "post" }}
+        <li itemprop="headline">
+
+            <i>{{ .Input.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
+            <a href="{{ .URL }}">{{ .Input.FrontMatter.Title }}</a>
+          </li>
+      {{ end }}
+      <!-- {{ .Input.FrontMatter.Kind }}: {{ .Input.ContentPath }}-->
   {{ end }}
   </ul>
 
+
   <section id="dailyphotos">
-    {{ if eq .RawItem.FrontMatter.Kind "image" }}
-      <div id="dailyphoto"><a href="{{ .URL }}"><img src="{{ $t := index .Thumbs "128t" }}{{ $t.Path }}"/ ></a></div>
+    daily
+    {{ range .Rendered }}
+      {{ if eq .Input.FrontMatter.Kind "image" }}
+        image
+        <div id="dailyphoto">
+          {{ $t := index .Thumbs "100w" }}
+          <a href="{{ .URL }}"><img src="{{ $t.Src }}" /></a>
+        </div>
+      {{ end }}
     {{ end }}
   </section>
+
 
 {{ end }}

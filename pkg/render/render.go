@@ -30,7 +30,7 @@ type Stream struct {
 
 // RenderedItem is a post along with any dynamically generated data we found
 type RenderedItem struct {
-	RawItem *nykya.RawItem
+	Input   *nykya.RenderInput
 	OutPath string
 	URL     string
 	Thumbs  map[string]ThumbMeta
@@ -39,14 +39,14 @@ type RenderedItem struct {
 	Title   string
 }
 
-func indexesForRawItem(i *nykya.RawItem) []string {
+func indexesForRenderInput(i *nykya.RenderInput) []string {
 	// TODO: make this more advanced
-	base := strings.Split(filepath.ToSlash(i.RelPath), "/")[0]
+	base := strings.Split(filepath.ToSlash(i.ContentPath), "/")[0]
 	return []string{"/", base}
 }
 
 // Site generates static output to the site output directory
-func Site(ctx context.Context, dc nykya.Config, items []*nykya.RawItem) ([]string, error) {
+func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]string, error) {
 	rs := []*RenderedItem{}
 	paths := []string{}
 
@@ -77,7 +77,7 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RawItem) ([]strin
 }
 
 func siteTmpl(name string, themeRoot string, dst string, data interface{}) error {
-	klog.Infof("Rendering %s to %s: %+v", name, dst, data)
+	klog.V(1).Infof("Rendering %s to %s: %+v", name, dst, data)
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0600); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
@@ -111,9 +111,8 @@ func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error)
 	return dst, siteTmpl("index", dc.Theme, dst, st)
 }
 
-func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*RenderedItem, error) {
-	klog.Infof("render %s %s: %+v", i.FrontMatter.Kind, i.RelPath, i)
-
+func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
+	klog.Infof("render: %s (%s)", i.ContentPath, i.FrontMatter.Kind)
 	switch i.FrontMatter.Kind {
 	case "image":
 		return image(ctx, dc, i)
@@ -121,8 +120,8 @@ func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*Render
 		return post(ctx, dc, i)
 	default:
 		return &RenderedItem{
-			RawItem: i,
-			Content: template.HTML(i.Content),
+			Input:   i,
+			Content: template.HTML(i.Inline),
 		}, nil
 	}
 }

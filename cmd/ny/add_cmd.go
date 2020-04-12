@@ -24,7 +24,6 @@ func (a *addCmd) Run(globals *Globals) error {
 	for _, c := range a.Content {
 		err := store.Add(context.Background(), dc, store.AddOptions{
 			Content:   c,
-			Root:      globals.Root,
 			Title:     a.Title,
 			Kind:      a.Kind,
 			Format:    a.Format,

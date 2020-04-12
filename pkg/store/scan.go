@@ -11,14 +11,14 @@ import (
 )
 
 // Scan scans a directory for posted content
-func Scan(ctx context.Context, root string) ([]*nykya.RawItem, error) {
+func Scan(ctx context.Context, root string) ([]*nykya.RenderInput, error) {
 	klog.Infof("Scanning root %s ...", root)
 
 	fs, err := ioutil.ReadDir(root)
 	if err != nil {
 		return nil, fmt.Errorf("readdir: %w", err)
 	}
-	var ps []*nykya.RawItem
+	var ps []*nykya.RenderInput
 
 	for _, f := range fs {
 		klog.V(1).Infof("Scanning subdir %s", f.Name())

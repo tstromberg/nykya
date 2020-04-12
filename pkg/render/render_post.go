@@ -24,11 +24,11 @@ func htmlContent(in string) (string, error) {
 	doc.Find("body").Each(func(i int, s *goquery.Selection) {
 		content = s.Find("main").Text()
 		if content != "" {
-			klog.Infof("found <main>: %s", content)
+			klog.V(1).Infof("found <main>: %s", content)
 			return
 		}
 		content = s.Text()
-		klog.Infof("found <body>: %s", content)
+		klog.V(1).Infof("found <body>: %s", content)
 	})
 
 	if content == "" {
@@ -45,13 +45,13 @@ func markdownContent(in string) (string, error) {
 	return buf.String(), nil
 }
 
-func post(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*RenderedItem, error) {
-	ext := filepath.Ext(i.RelPath)
-	outPath := strings.Replace(i.RelPath, ext, ".html", 1)
+func post(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
+	ext := filepath.Ext(i.ContentPath)
+	outPath := strings.Replace(i.ContentPath, ext, ".html", 1)
 
 	ri := &RenderedItem{
 		Title:   i.FrontMatter.Title,
-		RawItem: i,
+		Input:   i,
 		URL:     filepath.ToSlash(outPath),
 		OutPath: outPath,
 	}
@@ -60,9 +60,9 @@ func post(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*RenderedItem
 	var content string
 	switch i.Format {
 	case nykya.HTML:
-		content, err = htmlContent(i.Content)
+		content, err = htmlContent(i.Inline)
 	case nykya.Markdown:
-		content, err = markdownContent(i.Content)
+		content, err = markdownContent(i.Inline)
 	default:
 		return ri, fmt.Errorf("unknown format: %q", i.Format)
 	}
@@ -73,6 +73,6 @@ func post(ctx context.Context, dc nykya.Config, i *nykya.RawItem) (*RenderedItem
 
 	ri.Content = template.HTML(content)
 
-	klog.Infof("%s content: %s", ri.Title, content)
+	klog.V(1).Infof("%s content: %s", ri.Title, content)
 	return ri, siteTmpl("post", dc.Theme, filepath.Join(dc.Out, outPath), ri)
 }

@@ -26,7 +26,7 @@ func normalizeNewlines(bs []byte) []byte {
 	return bytes.Replace(bs, []byte{13}, []byte{10}, -1)
 }
 
-func fromMarkdown(path string) (*nykya.RawItem, error) {
+func fromMarkdown(path string) (*nykya.RenderInput, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
@@ -38,7 +38,7 @@ func fromMarkdown(path string) (*nykya.RawItem, error) {
 	}
 	b = normalizeNewlines(b)
 
-	i := &nykya.RawItem{
+	i := &nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
 			Posted: nykya.NewYAMLTime(t.ModTime()),
 		},
@@ -52,15 +52,15 @@ func fromMarkdown(path string) (*nykya.RawItem, error) {
 
 	si := bytes.Index(b, []byte(nykya.MarkdownSeparator))
 	if si > 0 {
-		i.Content = string(b[si+len(nykya.MarkdownSeparator):])
-		klog.Infof("%s: found markdown content: %s", path, i.Content)
+		i.Inline = string(b[si+len(nykya.MarkdownSeparator):])
+		klog.V(1).Infof("%s: found markdown content: %s", path, i.Inline)
 	} else {
 		klog.Warningf("%s: did not find markdown content (si=%d)", path, si)
 	}
 	return i, nil
 }
 
-func fromHTML(path string) (*nykya.RawItem, error) {
+func fromHTML(path string) (*nykya.RenderInput, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
@@ -73,7 +73,7 @@ func fromHTML(path string) (*nykya.RawItem, error) {
 
 	b = normalizeNewlines(b)
 
-	i := &nykya.RawItem{
+	i := &nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
 			Posted: nykya.NewYAMLTime(t.ModTime()),
 		},
@@ -91,21 +91,21 @@ func fromHTML(path string) (*nykya.RawItem, error) {
 			if err != nil {
 				return nil, fmt.Errorf("unmarshal: %w", err)
 			}
-			klog.Infof("%s: found html content: %s", path, i.Content)
-			i.Content = string(b[si+len(nykya.HTMLSeparator):])
+			klog.Infof("%s: found html content: %s", path, i.Inline)
+			i.Inline = string(b[si+len(nykya.HTMLSeparator):])
 		}
 	}
 
 	return i, nil
 }
 
-func fromJPEG(path string) (*nykya.RawItem, error) {
+func fromJPEG(path string) (*nykya.RenderInput, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
 	}
 
-	i := &nykya.RawItem{
+	i := &nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
 			Kind:   "image",
 			Posted: nykya.NewYAMLTime(t.ModTime()),
@@ -139,24 +139,25 @@ func fromJPEG(path string) (*nykya.RawItem, error) {
 	return i, nil
 }
 
-func fromDirectory(path string, root string) ([]*nykya.RawItem, error) {
-	klog.V(2).Infof("Looking inside %s ...", path)
+func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
+	klog.Infof("Looking inside %s ...", path)
 	fs, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("readdir: %w", err)
 	}
-	var ps []*nykya.RawItem
+	var ps []*nykya.RenderInput
+
 	for _, f := range fs {
 		if f.IsDir() {
-			dirRawItems, err := fromDirectory(filepath.Join(path, f.Name()), root)
+			dirRenderInputs, err := fromDirectory(filepath.Join(path, f.Name()), root)
 			if err != nil {
-				klog.Warningf("from dir %s: %v", f.Name(), err)
+				klog.Errorf("%s returned error: %v", f.Name(), err)
 			}
-			ps = append(ps, dirRawItems...)
+			ps = append(ps, dirRenderInputs...)
 			continue
 		}
 
-		klog.V(1).Infof("found %s", f.Name())
+		klog.Infof("  found %s", f.Name())
 		fp := filepath.Join(path, f.Name())
 
 		rel, err := filepath.Rel(root, fp)
@@ -168,34 +169,27 @@ func fromDirectory(path string, root string) ([]*nykya.RawItem, error) {
 		if err != nil {
 			return ps, fmt.Errorf("from file %q: %w", fp, err)
 		}
+
 		if i == nil {
-			return ps, fmt.Errorf("%q could not be parsed", fp)
-		}
-
-		if i.FrontMatter.Kind == "" {
-			klog.Errorf("%s has no kind: %+v", fp, i)
+			klog.Infof("ignoring %s (no output", f.Name())
 			continue
 		}
-		i.Path = fp
-		i.RelPath = rel
 
-		if err != nil {
-			klog.Warningf("unable to parse %s: %v", fp, err)
-			continue
-		}
-		klog.Infof("%s == %s (%s)", rel, i.FrontMatter.Kind, i.FrontMatter.Title)
+		i.ContentPath = rel
 		ps = append(ps, i)
 	}
 	return ps, nil
 }
 
-func fromFile(path string) (*nykya.RawItem, error) {
+func fromFile(path string) (*nykya.RenderInput, error) {
 	klog.V(1).Infof("parsing: %v", path)
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".jpg", ".jpeg":
 		return fromJPEG(path)
-	case ".yaml", ".md":
+	case ".yaml":
+		return nil, nil
+	case ".md":
 		return fromMarkdown(path)
 	case ".html":
 		return fromHTML(path)
