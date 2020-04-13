@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -55,6 +57,10 @@ func saveItem(ctx context.Context, dc nykya.Config, i nykya.RenderInput, path st
 			return fmt.Errorf("local copy: %w", err)
 		}
 		i.ContentPath = relPath
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0600); err != nil {
+		return fmt.Errorf("mkdir: %w", err)
 	}
 
 	klog.Infof("marshalling: %+v", i)

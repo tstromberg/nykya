@@ -21,6 +21,9 @@ func Scan(ctx context.Context, root string) ([]*nykya.RenderInput, error) {
 	var ps []*nykya.RenderInput
 
 	for _, f := range fs {
+		if !f.IsDir() {
+			continue
+		}
 		klog.V(1).Infof("Scanning subdir %s", f.Name())
 		ds, err := fromDirectory(filepath.Join(root, f.Name()), root)
 		if err != nil {

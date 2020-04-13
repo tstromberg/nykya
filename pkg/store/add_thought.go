@@ -30,10 +30,11 @@ func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 		}
 	}
 
-	outPath, err := localPath(dc, i.FrontMatter)
+	relDir, err := calculateInputHierarchy(dc, i.FrontMatter)
 	if err != nil {
-		return fmt.Errorf("local path: %w", err)
+		return fmt.Errorf("calculate hierarchy: %w", err)
 	}
 
+	outPath := filepath.Join(relDir, fmt.Sprintf("%s.md", slugify(i.Inline)))
 	return saveItem(ctx, dc, i, filepath.Join(dc.In, outPath))
 }

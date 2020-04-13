@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -59,6 +60,12 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 
 		rs = append(rs, ri)
 	}
+
+	sort.Slice(rs, func(i, j int) bool {
+		ip := rs[i].Input.FrontMatter.Posted.Time
+		jp := rs[j].Input.FrontMatter.Posted.Time
+		return ip.After(jp)
+	})
 
 	st := &Stream{
 		Title:       dc.Title,

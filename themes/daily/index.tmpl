@@ -19,7 +19,7 @@ ts
       {{ if eq .Input.FrontMatter.Kind "thought" }}
         <li itemprop="headline">
         <i>{{ .Input.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
-          {{ .Input.Content }}
+          {{ .Input.Inline }}
         </li>
       {{ end }}
       {{ if eq .Input.FrontMatter.Kind "post" }}

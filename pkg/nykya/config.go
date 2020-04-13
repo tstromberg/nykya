@@ -67,8 +67,8 @@ func findTheme(root string, theme string) string {
 func defaultConfig(root string) Config {
 	return Config{
 		Root:        root,
-		In:          filepath.Join(root, "in"),
-		Out:         filepath.Join(root, "out"),
+		In:          root,
+		Out:         root + ".out",
 		Title:       "Example Title",
 		Subtitle:    "Example Subtitle",
 		Description: "Example Description",
@@ -108,6 +108,35 @@ func ConfigFromRoot(rootOverride string) (Config, error) {
 	err = yaml.Unmarshal(b, &c)
 	if err != nil {
 		return c, fmt.Errorf("unmarshal: %w", err)
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return c, fmt.Errorf("getwd: %w", err)
+	}
+
+	if err := os.Chdir(root); err != nil {
+		return c, fmt.Errorf("chdir: %w", err)
+	}
+
+	in, err := filepath.Abs(filepath.FromSlash(c.In))
+	if err != nil {
+		return c, fmt.Errorf("abs: %w", err)
+	}
+	c.In = in
+
+	out, err := filepath.Abs(filepath.FromSlash(c.Out))
+	if err != nil {
+		return c, fmt.Errorf("abs: %w", err)
+	}
+	c.Out = out
+
+	if err := os.Chdir(root); err != nil {
+		return c, fmt.Errorf("chdir: %w", err)
+	}
+
+	if err := os.Chdir(pwd); err != nil {
+		return c, fmt.Errorf("chdir: %w", err)
 	}
 
 	c.Theme = findTheme(root, c.Theme)
