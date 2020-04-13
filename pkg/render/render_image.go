@@ -119,7 +119,7 @@ func renderImage(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*R
 			return nil, fmt.Errorf("create thumb: %w", err)
 		}
 
-		ct.Src = thumbDest
+		ct.Src = filepath.ToSlash(thumbDest)
 		ri.Thumbs[name] = *ct
 	}
 
