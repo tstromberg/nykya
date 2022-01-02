@@ -9,7 +9,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/tstromberg/nykya/pkg/nykya"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // localPath calculates the local path of an input, returning the relative path

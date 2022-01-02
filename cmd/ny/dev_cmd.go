@@ -9,7 +9,7 @@ import (
 	"github.com/tstromberg/nykya/pkg/nykya"
 	"github.com/tstromberg/nykya/pkg/render"
 	"github.com/tstromberg/nykya/pkg/store"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type devCmd struct {

@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"github.com/alecthomas/kong"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // Globals are global flags that can be set for all subcommands

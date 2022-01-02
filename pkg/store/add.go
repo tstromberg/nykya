@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/tstromberg/nykya/pkg/nykya"
 )

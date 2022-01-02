@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/djherbis/times.v1"
 	"gopkg.in/yaml.v2"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"

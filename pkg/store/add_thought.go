@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/tstromberg/nykya/pkg/nykya"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {

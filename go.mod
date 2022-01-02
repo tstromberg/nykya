@@ -15,5 +15,5 @@ require (
 	gopkg.in/djherbis/times.v1 v1.2.0
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.40.1
 )

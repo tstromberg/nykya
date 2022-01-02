@@ -11,7 +11,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/tstromberg/nykya/pkg/nykya"
 	"github.com/yuin/goldmark"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func htmlContent(in string) (string, error) {

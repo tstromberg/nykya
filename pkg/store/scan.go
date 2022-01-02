@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/tstromberg/nykya/pkg/nykya"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // Scan scans a directory for posted content

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/text/secure/precis"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // slugRemove is chars to be removed from slug calculation

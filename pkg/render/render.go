@@ -12,7 +12,7 @@ import (
 
 	"github.com/tstromberg/nykya/pkg/nykya"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 var (

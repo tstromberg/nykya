@@ -15,7 +15,7 @@ import (
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
 	"github.com/tstromberg/nykya/pkg/nykya"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func init() {
