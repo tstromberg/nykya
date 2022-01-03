@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
 )
 
 // Configuration file name
-const configFileName = "nykya.yaml"
+const ConfigFileName = "nykya.yaml"
 
 // DefaultOrganization shows where to put files if organization is unset
 const DefaultOrganization = `{{ .Kind }}s/{{ .Posted.Format "2006-01-02" }}`
@@ -23,6 +23,8 @@ type Config struct {
 	Title       string
 	Subtitle    string
 	Description string
+
+	SyncCommand string
 
 	In    string
 	Out   string
@@ -89,25 +91,24 @@ func ConfigFromRoot(rootOverride string) (Config, error) {
 		root = envRoot
 	}
 
-	cp := filepath.Join(root, configFileName)
-	if _, err := os.Stat(cp); err != nil {
-		return Config{}, fmt.Errorf("Unable to find %s within --root (%q), $NYKYA_ROOT (%q), and the current directory", configFileName, rootOverride, envRoot)
-	}
-
-	b, err := ioutil.ReadFile(cp)
-	if err != nil {
-		return Config{}, fmt.Errorf("readfile: %w", err)
-	}
-
-	root, err = filepath.Abs(root)
-	if err != nil {
-		return Config{}, fmt.Errorf("abs: %w", err)
-	}
-
 	c := defaultConfig(root)
-	err = yaml.Unmarshal(b, &c)
-	if err != nil {
-		return c, fmt.Errorf("unmarshal: %w", err)
+	cp := filepath.Join(root, ConfigFileName)
+	if _, err := os.Stat(cp); err == nil {
+
+		b, err := ioutil.ReadFile(cp)
+		if err != nil {
+			return Config{}, fmt.Errorf("readfile: %w", err)
+		}
+
+		root, err = filepath.Abs(root)
+		if err != nil {
+			return Config{}, fmt.Errorf("abs: %w", err)
+		}
+
+		err = yaml.Unmarshal(b, &c)
+		if err != nil {
+			return c, fmt.Errorf("unmarshal: %w", err)
+		}
 	}
 
 	pwd, err := os.Getwd()

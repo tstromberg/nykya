@@ -1,5 +1,6 @@
 package main
 
+
 import (
 	"flag"
 
@@ -18,6 +19,7 @@ type CLI struct {
 	Add    addCmd    `cmd:"" help:"Add content"`
 	Render renderCmd `cmd:"" help:"Render output to a static directory"`
 	Dev    devCmd    `cmd:"" help:"Developer mode: local webserver with instant rendering"`
+	Init   initCmd   `cmd:"" help:"Initialize a site directory"`
 }
 
 func main() {

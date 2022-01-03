@@ -1,0 +1,5 @@
+title: "Example Nykya site"
+subtitle: "A deep-dive into madness"
+description: "insert description here"
+
+sync_command: rsync -va . remote:/www/content/
