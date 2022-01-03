@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"gopkg.in/djherbis/times.v1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
 
 	"github.com/rwcarlsen/goexif/exif"
