@@ -69,8 +69,8 @@ func findTheme(root string, theme string) string {
 func defaultConfig(root string) Config {
 	return Config{
 		Root:        root,
-		In:          root,
-		Out:         root + ".out",
+		In:          "content/",
+		Out:         "rendered/",
 		Title:       "Example Title",
 		Subtitle:    "Example Subtitle",
 		Description: "Example Description",

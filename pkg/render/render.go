@@ -15,9 +15,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-var (
-	thumbQuality = 85
-)
+var thumbQuality = 85
 
 // Stream is basically the entire blog.
 type Stream struct {
@@ -86,7 +84,7 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 func siteTmpl(name string, themeRoot string, dst string, data interface{}) error {
 	klog.V(1).Infof("Rendering %s to %s: %+v", name, dst, data)
 
-	if err := os.MkdirAll(filepath.Dir(dst), 0600); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
 
@@ -110,7 +108,6 @@ func siteTmpl(name string, themeRoot string, dst string, data interface{}) error
 		return fmt.Errorf("execute: %w", err)
 	}
 	return nil
-
 }
 
 func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error) {

@@ -59,7 +59,7 @@ func saveItem(ctx context.Context, dc nykya.Config, i nykya.RenderInput, path st
 		i.ContentPath = relPath
 	}
 
-	if err := os.MkdirAll(filepath.Dir(path), 0600); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
 

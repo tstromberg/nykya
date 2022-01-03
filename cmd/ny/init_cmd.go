@@ -22,6 +22,10 @@ func (a *initCmd) Run(globals *Globals) error {
 		return fmt.Errorf("config from root: %w", err)
 	}
 
+	if err := os.MkdirAll(dc.In, 0o700); err != nil {
+		return err
+	}
+
 	bs, err := yaml.Marshal(dc)
 	if err != nil {
 		return err

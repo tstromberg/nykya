@@ -193,7 +193,10 @@ func fromFile(path string) (*nykya.RenderInput, error) {
 		return fromMarkdown(path)
 	case ".html":
 		return fromHTML(path)
+	case ".DS_Store":
+		return nil, nil
 	default:
-		return nil, fmt.Errorf("unknown file type: %q", ext)
+		klog.Warningf("%s has an unknown file type: %q", ext)
+		return nil, nil
 	}
 }
