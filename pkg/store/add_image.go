@@ -21,7 +21,7 @@ func addImage(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	i := nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
 			Kind:   opts.Kind,
-			Posted: nykya.NewYAMLTime(opts.Timestamp),
+			Date:   nykya.NewYAMLTime(opts.Timestamp),
 			Origin: opts.Content,
 		},
 		Format: formatForPath(opts.Content),

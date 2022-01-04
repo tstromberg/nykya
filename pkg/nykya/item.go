@@ -9,28 +9,24 @@ type YAMLTime struct {
 	time.Time
 }
 
+var ymdFormat = "2006-01-02"
+
 // MarshalYAML marshals time into RFC 1123
-func (yt YAMLTime) MarshalYAML() (interface{}, error) {
-	return yt.Format(time.RFC1123Z), nil
+func (yt *YAMLTime) MarshalYAML() (interface{}, error) {
+	return yt.Format(ymdFormat), nil
 }
 
 // UnmarshalYAML unmarshals RFC1123 or Y-M-D timestamps to time.Time
-func (yt YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (yt *YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	err := unmarshal(&s)
 	if err != nil {
 		return err
 	}
-	tp, err := time.Parse(time.RFC1123Z, s)
-	if err != nil {
-		// Be forgiving
-		tp, err = time.Parse("2006-01-02", s)
-		if err != nil {
-			return err
-		}
-	}
+
+	tp, err := time.Parse(ymdFormat, s)
 	yt.Time = tp
-	return nil
+	return err
 }
 
 // NewYAMLTime returns a populated YAMLTime object
@@ -46,8 +42,8 @@ type FrontMatter struct {
 	// Draft is if the page is a draft (do not publish)
 	Draft bool
 
-	// Posted is when was the content posted
-	Posted YAMLTime
+	// Date is when was the content posted
+	Date YAMLTime `yaml:"date"`
 
 	// Title is a title of this post. (optional)
 	Title string `yaml:",omitempty"`

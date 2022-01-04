@@ -14,7 +14,7 @@ import (
 const ConfigFileName = "nykya.yaml"
 
 // DefaultOrganization shows where to put files if organization is unset
-const DefaultOrganization = `{{ .Kind }}s/{{ .Posted.Format "2006-01-02" }}`
+const DefaultOrganization = `{{ .Kind }}s/{{ .Date.Format "2006" }}`
 
 // Config is site configuration
 type Config struct {

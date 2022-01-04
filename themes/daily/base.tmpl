@@ -1,44 +1,45 @@
 {{ define "base" }}
-    <!DOCTYPE html>
-    <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 
-    <head>
-        <title>{{ .Title }}</title>
-        <!-- headers block -->
-        {{ block "headers" .}} {{ end }}
-        <!-- /header" block -->
+<head>
+  <title>{{ .Title }}</title>
+  <!-- headers block -->
+  {{ block "headers" .}} {{ end }}
+  <!-- /header" block -->
 
-        <!-- style block -->
-        {{ block "style" .}} {{ end }}
-        <!-- /style block -->
+  <!-- style block -->
+  {{ block "style" .}} {{ end }}
+  <!-- /style block -->
 
-    </head>
-    <body>
-        <div class="container">
-            <header>
-                {{ block "header" .}}{{ end }}
-            </header>
+</head>
 
-            <main>
-                <section id="content">
-                    {{ block "content" .}} {{end}}
-                </section>
+<body>
+  <div class="container">
+    <header>
+      {{ block "header" .}}{{ end }}
+    </header>
 
-                <section id="side">
-                    {{ block "side" .}}{{ end }}
-                </section>
-            </main>
-        
-            <footer>
-                <!-- footer block -->
-                {{block "footer" .}} {{end}}
-                <!-- /footer block -->
-            </footer>
-        </div>
+    <main>
+      <section id="content">
+        {{ block "content" .}} {{end}}
+      </section>
 
-        <!-- js block -->
-        {{block "js" .}} {{end}}
-        <!-- /js block -->
-    </body>
-    </html>
+      <section id="side">
+        {{ block "side" .}}{{ end }}
+      </section>
+    </main>
+    <footer>
+      <!-- footer block -->
+      {{block "footer" .}} {{end}}
+      <!-- /footer block -->
+    </footer>
+  </div>
+
+  <!-- js block -->
+  {{block "js" .}} {{end}}
+  <!-- /js block -->
+</body>
+
+</html>
 {{ end }}

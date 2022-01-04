@@ -3,16 +3,16 @@
 {{ define "title" }}{{ .Input.FrontMatter.Title }}{{ end }}
 
 {{ define "headers" }}
-  <link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
-  <meta name=viewport content="width=device-width, initial-scale=1"/>
+<link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
+<meta name=viewport content="width=device-width, initial-scale=1" />
 {{ end }}
 
 {{ define "content" }}
-  <h1>{{ .Input.FrontMatter.Title }}</h1>
+<h1>{{ .Input.FrontMatter.Title }}</h1>
 
-  <p><em>{{ .Input.FrontMatter.Posted.Format "2006-01-02"}}</em></p>
+<p><em>{{ .Input.FrontMatter.Date.Format "2006-01-02"}}</em></p>
 
-  <p>{{ .Input.FrontMatter.Description }}</p>
+<p>{{ .Input.FrontMatter.Description }}</p>
 
-  {{ .Content }}
+{{ .Content }}
 {{ end }}

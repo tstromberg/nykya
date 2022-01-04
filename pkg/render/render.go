@@ -60,8 +60,8 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 	}
 
 	sort.Slice(rs, func(i, j int) bool {
-		ip := rs[i].Input.FrontMatter.Posted.Time
-		jp := rs[j].Input.FrontMatter.Posted.Time
+		ip := rs[i].Input.FrontMatter.Date.Time
+		jp := rs[j].Input.FrontMatter.Date.Time
 		return ip.After(jp)
 	})
 
@@ -116,7 +116,7 @@ func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error)
 }
 
 func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
-	klog.Infof("render: %s (%s)", i.ContentPath, i.FrontMatter.Kind)
+	klog.V(1).Infof("render: %s: %+v", i.ContentPath, i.FrontMatter)
 	switch i.FrontMatter.Kind {
 	case "image":
 		return renderImage(ctx, dc, i)

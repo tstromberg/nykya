@@ -3,8 +3,8 @@
 {{ define "title" }}{{ .Title }}{{ end }}
 
 {{ define "headers" }}
-  <link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
-  <meta name=viewport content="width=device-width, initial-scale=1"/>
+<link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
+<meta name=viewport content="width=device-width, initial-scale=1" />
 {{ end }}
 
 
@@ -13,35 +13,35 @@ ts
 {{ end }}
 
 {{ define "content" }}
- <h1>{{ .Title }}</h1>
-  <ul> 
+<h1>{{ .Title }}</h1>
+<ul>
   {{ range .Rendered }}
-      {{ if eq .Input.FrontMatter.Kind "thought" }}
-        <li itemprop="headline">
-        <i>{{ .Input.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
-          {{ .Input.Inline }}
-        </li>
-      {{ end }}
-      {{ if eq .Input.FrontMatter.Kind "post" }}
-        <li itemprop="headline">
-
-            <i>{{ .Input.FrontMatter.Posted.Format "2006-01-02" }}</i> &mdash; 
-            <a href="{{ .URL }}">{{ .Input.FrontMatter.Title }}</a>
-          </li>
-      {{ end }}
-      <!-- {{ .Input.FrontMatter.Kind }}: {{ .Input.ContentPath }}-->
+  {{ if eq .Input.FrontMatter.Kind "thought" }}
+  <li itemprop="headline">
+    <i>{{ .Input.FrontMatter.Date.Format "2006-01-02" }}</i> &mdash;
+    {{ .Input.Inline }}
+  </li>
   {{ end }}
-  </ul>
+  {{ if eq .Input.FrontMatter.Kind "post" }}
+  <li itemprop="headline">
+
+    <i>{{ .Input.FrontMatter.Date.Format "2006-01-02" }}</i> &mdash;
+    <a href="{{ .URL }}">{{ .Input.FrontMatter.Title }}</a>
+  </li>
+  {{ end }}
+  <!-- {{ .Input.FrontMatter.Kind }}: {{ .Input.ContentPath }}-->
+  {{ end }}
+</ul>
 {{ end }}
 
 {{ define "side" }}
-  <section id="dailyphotos">
-    <!-- room for dynamic scaling algo -->
-    {{ range .Rendered }}
-      {{ if eq .Input.FrontMatter.Kind "image" }}
-        {{ $t := index .Thumbs "133t" }}
-        <div class="daily"><a href="{{ .URL }}"><img src="{{ $t.Src }}" /></a></div>
-      {{ end }}
-    {{ end }}
-  </section>
+<section id="dailyphotos">
+  <!-- room for dynamic scaling algo -->
+  {{ range .Rendered }}
+  {{ if eq .Input.FrontMatter.Kind "image" }}
+  {{ $t := index .Thumbs "133t" }}
+  <div class="daily"><a href="{{ .URL }}"><img src="{{ $t.Src }}" /></a></div>
+  {{ end }}
+  {{ end }}
+</section>
 {{ end }}

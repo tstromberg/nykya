@@ -1,68 +1,69 @@
 {{define "style"}}
 <style>
-
-body {
+  body {
     font-size: 120%;
     margin: 0;
     padding: 0;
-}
+  }
 
-header {
+  header {
     text-align: right;
     font-family: monospace;
     padding: 1em;
     color: #999;
-}
+  }
 
-main {
+  main {
     display: flex;
-}
+  }
 
-#content {
+  #content {
     padding-left: 8mm;
     padding-right: 8mm;
     flex-basis: 60em;
-}
+  }
 
-#side {
-    background-color: #212121;
+  #side {
+    /* background-color: #212121; */
     flex-basis: 800px;
     flex-grow: 1;
     flex-shrink: 1;
     padding: 4px;
-}
+  }
 
-#side img {
+  #side img {
     margin: 2px;
-}
+  }
 
-.daily {
+  .daily {
     display: inline-block;
-}
+  }
 
-h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: sans-serif;
-}
+  }
 
-pre {
+  pre {
     overflow-x: auto;
     font-size: 90%;
-}
+  }
 
-blockquote {
+  blockquote {
     margin: 10px;
     border-left: 3px solid #eee;
     padding-left: 15px;
     color: #333;
-}
+  }
 
 
-footer {
+  footer {
     margin-top: 2em;
     text-align: right;
     font-family: monospace;
     padding: 1em;
-}
-
+  }
 </style>
 {{ end }}

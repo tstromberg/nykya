@@ -14,8 +14,8 @@ func addThought(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 
 	i := nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
-			Kind:   opts.Kind,
-			Posted: nykya.NewYAMLTime(opts.Timestamp),
+			Kind: opts.Kind,
+			Date: nykya.NewYAMLTime(opts.Timestamp),
 		},
 		Format: nykya.Markdown,
 	}

@@ -40,23 +40,27 @@ func fromMarkdown(path string) (*nykya.RenderInput, error) {
 
 	i := &nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
-			Posted: nykya.NewYAMLTime(t.ModTime()),
+			Date: nykya.NewYAMLTime(t.ModTime()),
 		},
 		Format: nykya.Markdown,
 	}
 
-	err = yaml.Unmarshal(b, &i.FrontMatter)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal: %w", err)
+	if i.FrontMatter.Kind == "" {
+		i.FrontMatter.Kind = "post"
 	}
 
-	si := bytes.Index(b, []byte(nykya.MarkdownSeparator))
-	if si > 0 {
-		i.Inline = string(b[si+len(nykya.MarkdownSeparator):])
-		klog.V(1).Infof("%s: found markdown content: %s", path, i.Inline)
-	} else {
-		klog.Warningf("%s: did not find markdown content (si=%d)", path, si)
+	before, after, found := bytes.Cut(b, []byte(nykya.MarkdownSeparator))
+	if !found {
+		i.Inline = string(b)
+		return i, nil
 	}
+
+	err = yaml.Unmarshal(before, &i.FrontMatter)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal of %s: %w", b, err)
+	}
+	klog.V(1).Infof("front-matter date: %s", i.FrontMatter.Date)
+	i.Inline = string(after)
 	return i, nil
 }
 
@@ -75,7 +79,7 @@ func fromHTML(path string) (*nykya.RenderInput, error) {
 
 	i := &nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
-			Posted: nykya.NewYAMLTime(t.ModTime()),
+			Date: nykya.NewYAMLTime(t.ModTime()),
 		},
 		Format: nykya.HTML,
 	}
@@ -107,8 +111,8 @@ func fromJPEG(path string) (*nykya.RenderInput, error) {
 
 	i := &nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
-			Kind:   "image",
-			Posted: nykya.NewYAMLTime(t.ModTime()),
+			Kind: "image",
+			Date: nykya.NewYAMLTime(t.ModTime()),
 		},
 		Format: nykya.JPEG,
 	}
@@ -128,7 +132,7 @@ func fromJPEG(path string) (*nykya.RenderInput, error) {
 	if err != nil {
 		klog.Errorf("datetime(%s): %v", path, err)
 	} else {
-		i.FrontMatter.Posted = nykya.NewYAMLTime(et)
+		i.FrontMatter.Date = nykya.NewYAMLTime(et)
 	}
 
 	ed, err := ex.Get(exif.ImageDescription)
@@ -175,6 +179,8 @@ func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
 			continue
 		}
 
+		klog.V(1).Infof("  date=%s title=%s", i.FrontMatter.Date, i.FrontMatter.Title)
+
 		i.ContentPath = rel
 		ps = append(ps, i)
 	}
@@ -193,7 +199,7 @@ func fromFile(path string) (*nykya.RenderInput, error) {
 		return fromMarkdown(path)
 	case ".html":
 		return fromHTML(path)
-	case ".DS_Store":
+	case ".DS_Store", ".ds_store":
 		return nil, nil
 	default:
 		klog.Warningf("%s has an unknown file type: %q", ext)
