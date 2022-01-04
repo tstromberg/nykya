@@ -3,18 +3,14 @@
 {{ define "title" }}{{ .Title }}{{ end }}
 
 {{ define "headers" }}
-<link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.Title }} feed" />
+<link href="atom.xml" type="application/atom+xml" rel="alternate" title="{{.PageTitle }} feed" />
 <meta name=viewport content="width=device-width, initial-scale=1" />
 {{ end }}
 
-
-{{ define "header" }}
-ts
-{{ end }}
-
 {{ define "content" }}
-<h1>{{ .Title }}</h1>
+<h1>{{ .PageTitle }}</h1>
 <ul>
+  {{ $idxPath := .OutPath }}
   {{ range .Rendered }}
   {{ if eq .Input.FrontMatter.Kind "thought" }}
   <li itemprop="headline">
@@ -26,7 +22,7 @@ ts
   <li itemprop="headline">
 
     <i>{{ .Input.FrontMatter.Date.Format "2006-01-02" }}</i> &mdash;
-    <a href="{{ .URL }}">{{ .Input.FrontMatter.Title }}</a>
+    <a href="{{ RelPath $idxPath .URL }}">{{ .Input.FrontMatter.Title }}</a>
   </li>
   {{ end }}
   <!-- {{ .Input.FrontMatter.Kind }}: {{ .Input.ContentPath }}-->

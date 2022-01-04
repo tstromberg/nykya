@@ -1,16 +1,58 @@
 {{define "style"}}
 <style>
   body {
-    font-size: 120%;
-    margin: 0;
-    padding: 0;
+    margin: 1em;
+    padding: 1em;
+    font-family: Lora, serif;
+  }
+
+  img#profile {
+    border-radius: 50%;
+  }
+
+  #profile-container {
+    margin-top: auto;
+    margin-bottom: auto;
+    display: block;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: "Open Sans", sans-serif;
   }
 
   header {
-    text-align: right;
+    font-size: 150%;
     font-family: monospace;
-    padding: 1em;
+    padding: 0.5em;
     color: #999;
+    display: flex;
+    background-color: #E7F1FE;
+  }
+
+  .left {
+    border: 1px solid 00f;
+    width: 70%;
+  }
+
+  .right {
+    margin-top: auto;
+    margin-bottom: auto;
+    font-size: 80%;
+    text-align: right;
+    flex-grow: 1;
+  }
+
+  div#name {
+    margin-left: 0.5em;
+    margin-top: auto;
+    margin-bottom: auto;
+    flex-grow: 3;
+  }
+
+  .menuitem {
+    display: inline-block;
   }
 
   main {
@@ -37,13 +79,6 @@
 
   .daily {
     display: inline-block;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: sans-serif;
   }
 
   pre {
@@ -84,5 +119,8 @@
     width: 49%;
     display: inline-block;
   }
+
+
+  /* bits stolen from ts handmade page */
 </style>
 {{ end }}

@@ -70,8 +70,9 @@ func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput, prev
 	outPath := strings.Replace(i.ContentPath, ext, ".html", 1)
 
 	ri := &RenderedItem{
-		Title:       i.FrontMatter.Title,
+		PageTitle:   i.FrontMatter.Title,
 		Input:       i,
+		SiteTitle:   dc.Title,
 		URL:         urlTo(i),
 		OutPath:     outPath,
 		Next:        next,
@@ -97,6 +98,6 @@ func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput, prev
 
 	ri.Content = template.HTML(content)
 
-	klog.V(1).Infof("%s content: %s", ri.Title, content)
+	klog.V(1).Infof("%s content: %s", ri.PageTitle, content)
 	return ri, siteTmpl("post", dc.Theme, filepath.Join(dc.Out, outPath), ri)
 }

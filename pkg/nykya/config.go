@@ -30,6 +30,8 @@ type Config struct {
 	Out   string
 	Theme string
 
+	IncludeDrafts bool
+
 	Organization map[string]string
 }
 

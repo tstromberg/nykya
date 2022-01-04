@@ -13,7 +13,8 @@ import (
 )
 
 type devCmd struct {
-	Port int `default:32080 help:"Set a port TCP number"`
+	Port   int  `default:32080 help:"Set a port TCP number"`
+	Drafts bool `optional help:"Include draft posts"`
 }
 
 func renderLoop(ctx context.Context, dc nykya.Config) error {
@@ -42,6 +43,10 @@ func (c *devCmd) Run(globals *Globals) error {
 	dc, err := nykya.ConfigFromRoot(globals.Root)
 	if err != nil {
 		return fmt.Errorf("config from root: %w", err)
+	}
+
+	if c.Drafts {
+		dc.IncludeDrafts = true
 	}
 
 	ctx := context.Background()

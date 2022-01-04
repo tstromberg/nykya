@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/otiai10/copy"
 	"github.com/tstromberg/nykya/pkg/nykya"
@@ -18,16 +17,6 @@ import (
 
 var thumbQuality = 85
 
-// Stream is basically the entire blog.
-type Stream struct {
-	Rendered    []*RenderedItem
-	Title       string
-	Subtitle    string
-	Description string
-
-	Timestamp time.Time
-}
-
 // RenderedItem is a post along with any dynamically generated data we found
 type RenderedItem struct {
 	Input   *nykya.RenderInput
@@ -35,8 +24,9 @@ type RenderedItem struct {
 	URL     string
 	Thumbs  map[string]ThumbMeta
 
-	Content template.HTML
-	Title   string
+	Content   template.HTML
+	SiteTitle string
+	PageTitle string
 
 	Previous    *nykya.RenderInput
 	PreviousURL string
@@ -45,10 +35,8 @@ type RenderedItem struct {
 	NextURL string
 }
 
-func indexesForRenderInput(i *nykya.RenderInput) []string {
-	// TODO: make this more advanced
-	base := strings.Split(filepath.ToSlash(i.ContentPath), "/")[0]
-	return []string{"/", base}
+func indexesForRender(i *RenderedItem) []string {
+	return []string{filepath.Dir(i.OutPath)}
 }
 
 // Site generates static output to the site output directory
@@ -62,36 +50,60 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 		return ip.Before(jp)
 	})
 
+	byIndex := map[string][]*RenderedItem{}
+
 	for x, i := range items {
+		if i.FrontMatter.Draft && !dc.IncludeDrafts {
+			klog.Infof("Ignoring draft: %s", i.FrontMatter.Title)
+			continue
+		}
+
 		ri, err := renderItem(ctx, dc, items, x)
 		if err != nil {
 			klog.Errorf("annotate(%+v): %v", i, err)
 			continue
 		}
+		paths = append(paths, ri.OutPath)
+
+		if ri.PageTitle != "" {
+			for _, i := range indexesForRender(ri) {
+				if byIndex[i] == nil {
+					byIndex[i] = []*RenderedItem{}
+				}
+				klog.Infof("Adding %q to index %q", ri.PageTitle, i)
+				byIndex[i] = append(byIndex[i], ri)
+			}
+		}
 
 		rs = append(rs, ri)
 	}
 
-	// Render indexes
-
-	st := &Stream{
-		Title:       dc.Title,
-		Subtitle:    dc.Subtitle,
-		Description: dc.Description,
-		Timestamp:   time.Now(),
-		Rendered:    rs,
+	for idx, ris := range byIndex {
+		outPath := filepath.Join(idx, "index.html")
+		if err := renderIndex(ctx, dc, ris, outPath); err != nil {
+			return paths, fmt.Errorf("render index: %w", err)
+		}
+		paths = append(paths, outPath)
 	}
 
-	path, err := siteIndex(ctx, dc, st)
-	if err != nil {
-		return []string{path}, fmt.Errorf("site index: %w", err)
-	}
-	paths = append(paths, path)
 	return paths, nil
 }
 
+func tmplRelPath(root string, path string) string {
+	r, err := filepath.Rel(root, path)
+	if err != nil {
+		klog.Errorf("unable to calculate relpath of root=%s path=%s: %v", root, path, err)
+		return path
+	}
+
+	// If we're in the same directory, don't go up
+	r = strings.TrimPrefix(r, "../")
+	klog.Infof("relpath of root=%s path=%s: %s", root, path, r)
+	return r
+}
+
 func siteTmpl(name string, themeRoot string, dst string, data interface{}) error {
-	klog.V(1).Infof("Rendering %s to %s: %+v", name, dst, data)
+	klog.Infof("Rendering %s to %s ...", name, dst)
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
@@ -111,17 +123,16 @@ func siteTmpl(name string, themeRoot string, dst string, data interface{}) error
 		filepath.Join(themeRoot, "base.tmpl"),
 	}
 
-	t := template.Must(template.New(fmt.Sprintf("%s.tmpl", name)).ParseFiles(paths...))
+	fm := template.FuncMap{
+		"RelPath": tmplRelPath,
+	}
+
+	t := template.Must(template.New(fmt.Sprintf("%s.tmpl", name)).Funcs(fm).ParseFiles(paths...))
 	err = t.Execute(f, data)
 	if err != nil {
 		return fmt.Errorf("execute: %w", err)
 	}
 	return nil
-}
-
-func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error) {
-	dst := filepath.Join(dc.Out, "nykya_index.html")
-	return dst, siteTmpl("index", dc.Theme, dst, st)
 }
 
 func renderItem(ctx context.Context, dc nykya.Config, is []*nykya.RenderInput, idx int) (*RenderedItem, error) {

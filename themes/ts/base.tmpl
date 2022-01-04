@@ -1,0 +1,68 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>{{ .PageTitle }}</title>
+  <!-- headers block -->
+  {{ block "headers" .}} {{ end }}
+  <!-- /header" block -->
+
+  <!-- style block -->
+  {{ block "style" .}} {{ end }}
+  <!-- /style block -->
+
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      {{ block "header" .}}{{ end }}
+    </header>
+
+    <main>
+      <section id="content">
+        {{ block "content" .}} {{end}}
+      </section>
+
+      <section id="side">
+        {{ block "side" .}}{{ end }}
+      </section>
+    </main>
+
+    <footer id="footsie">
+      <!-- footer block -->
+      {{block "footer" .}} {{end}}
+      <!-- /footer block -->
+    </footer>
+  </div>
+
+  <!-- js block -->
+  {{block "js" .}} {{end}}
+  <!-- /js block -->
+</body>
+
+</html>
+{{ end }}
+
+
+{{ define "header" }}
+<div id="profile-container"><img id="profile" src="../profile.jpg" width="48" alt="photo of thomas str&uoml;berg"></div>
+<div id="name">{{ .SiteTitle }}</a>
+</div>
+
+<div class="right">
+  <div id="blog" class="menuitem"><a href="https://dev.to/tstromberg">blog</a></div>
+  <div id="github" class="menuitem"><a href="https://github.com/tstromberg">github</a></div>
+  <div id="twitter" class="menuitem"><a href="https://twitter.com/thomrstrom">twitter</a></div>
+  <div id="resume" class="menuitem"><a href="photos/">photos</a></div>
+  <div id="resume" class="menuitem"><a href="resume/ts.html">resume</a></div>
+  <div id="contact" class="menuitem"><a href="javascript:dece('dEBzdHJvbWJlcmcub3Jn');">email</a></div>
+  <script>
+    function dece(encoded) {
+      var address = atob(encoded);
+      window.location.href = "mailto:" + address;
+    }
+  </script>
+</div>
+{{ end }}
