@@ -120,7 +120,7 @@ func siteTmpl(name string, themeRoot string, dst string, data interface{}) error
 }
 
 func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error) {
-	dst := filepath.Join(dc.Out, "index.html")
+	dst := filepath.Join(dc.Out, "nykya_index.html")
 	return dst, siteTmpl("index", dc.Theme, dst, st)
 }
 

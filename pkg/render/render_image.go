@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/anthonynsimon/bild/imgio"
@@ -72,7 +71,7 @@ func renderImage(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*R
 				ri.Thumbs[name] = *rt
 				continue
 			}
-			klog.Warningf("unable to read thumb: %v", err)
+			klog.Warningf("unable to read %s: %v", fullThumbDest, err)
 		}
 
 		if img == nil {
@@ -132,29 +131,9 @@ func readThumb(path string) (*ThumbMeta, error) {
 	}
 	defer f.Close()
 
-	ex, err := exif.Decode(f)
+	im, _, err := image.DecodeConfig(f)
 	if err != nil {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
-
-	gx, err := ex.Get(exif.ImageWidth)
-	if err != nil {
-		return nil, fmt.Errorf("imgwidth: %w", err)
-	}
-	x, err := strconv.Atoi(gx.String())
-	if err != nil {
-		return nil, err
-	}
-
-	gy, err := ex.Get(exif.ImageLength)
-	if err != nil {
-		return nil, fmt.Errorf("imglen: %w", err)
-	}
-
-	y, err := strconv.Atoi(gy.String())
-	if err != nil {
-		return nil, err
-	}
-
-	return &ThumbMeta{X: x, Y: y}, nil
+	return &ThumbMeta{X: im.Width, Y: im.Height}, nil
 }
