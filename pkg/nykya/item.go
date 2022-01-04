@@ -58,8 +58,10 @@ type FrontMatter struct {
 // RenderInput is ephemeral metadata for a post to be rendered
 type RenderInput struct {
 	FrontMatter FrontMatter
+
 	// Inline is inline content
 	Inline string
+
 	// ContentPath is relative path to content (not the sidecar)
 	ContentPath string
 

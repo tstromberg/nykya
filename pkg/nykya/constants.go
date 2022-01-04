@@ -9,6 +9,9 @@ const HTML = "html"
 // JPEG are images
 const JPEG = "jpeg"
 
+// RAW are raw files
+const Raw = "raw"
+
 // MarkdownSeparator separates YAML documents
 const MarkdownSeparator = "\n---\n"
 

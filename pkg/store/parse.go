@@ -64,7 +64,7 @@ func fromMarkdown(path string) (*nykya.RenderInput, error) {
 	return i, nil
 }
 
-func fromHTML(path string) (*nykya.RenderInput, error) {
+func fromHTML(path string, relPath string) (*nykya.RenderInput, error) {
 	t, err := times.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
@@ -98,6 +98,8 @@ func fromHTML(path string) (*nykya.RenderInput, error) {
 			klog.Infof("%s: found html content: %s", path, i.Inline)
 			i.Inline = string(b[si+len(nykya.HTMLSeparator):])
 		}
+	} else {
+		return fromRawFile(path, relPath)
 	}
 
 	return i, nil
@@ -143,6 +145,24 @@ func fromJPEG(path string) (*nykya.RenderInput, error) {
 	return i, nil
 }
 
+func fromRawFile(path string, relPath string) (*nykya.RenderInput, error) {
+	t, err := times.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("stat: %w", err)
+	}
+
+	i := &nykya.RenderInput{
+		FrontMatter: nykya.FrontMatter{
+			Kind: "raw",
+			Date: nykya.NewYAMLTime(t.ModTime()),
+		},
+		ContentPath: relPath,
+		Format:      nykya.Raw,
+	}
+
+	return i, nil
+}
+
 func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
 	klog.Infof("Looking inside %s ...", path)
 	fs, err := ioutil.ReadDir(path)
@@ -152,6 +172,11 @@ func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
 	var ps []*nykya.RenderInput
 
 	for _, f := range fs {
+		if strings.HasPrefix(f.Name(), ".") {
+			klog.Warningf("skipping %s (hidden)", f.Name())
+			continue
+		}
+
 		if f.IsDir() {
 			dirRenderInputs, err := fromDirectory(filepath.Join(path, f.Name()), root)
 			if err != nil {
@@ -169,9 +194,11 @@ func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
 			return ps, fmt.Errorf("rel: %w", err)
 		}
 
-		i, err := fromFile(fp)
+		i, err := fromFile(fp, rel)
+		// Mostly harmless
 		if err != nil {
-			return ps, fmt.Errorf("from file %q: %w", fp, err)
+			klog.Errorf("fromFile failed on %q: %w", fp, err)
+			continue
 		}
 
 		if i == nil {
@@ -187,8 +214,9 @@ func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
 	return ps, nil
 }
 
-func fromFile(path string) (*nykya.RenderInput, error) {
+func fromFile(path string, relPath string) (*nykya.RenderInput, error) {
 	klog.V(1).Infof("parsing: %v", path)
+
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".jpg", ".jpeg":
@@ -198,11 +226,10 @@ func fromFile(path string) (*nykya.RenderInput, error) {
 	case ".md":
 		return fromMarkdown(path)
 	case ".html":
-		return fromHTML(path)
+		return fromHTML(path, relPath)
 	case ".DS_Store", ".ds_store":
 		return nil, nil
 	default:
-		klog.Warningf("%s has an unknown file type: %q", ext)
-		return nil, nil
+		return fromRawFile(path, relPath)
 	}
 }

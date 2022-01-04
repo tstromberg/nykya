@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/otiai10/copy"
 	"github.com/tstromberg/nykya/pkg/nykya"
 
 	"k8s.io/klog/v2"
@@ -71,6 +72,8 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 		rs = append(rs, ri)
 	}
 
+	// Render indexes
+
 	st := &Stream{
 		Title:       dc.Title,
 		Subtitle:    dc.Subtitle,
@@ -123,7 +126,7 @@ func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error)
 
 func renderItem(ctx context.Context, dc nykya.Config, is []*nykya.RenderInput, idx int) (*RenderedItem, error) {
 	i := is[idx]
-	klog.V(1).Infof("render: %s: %+v", i.ContentPath, i.FrontMatter)
+	klog.Infof("render: %s: %+v", i.ContentPath, i.FrontMatter)
 
 	var previous, next *nykya.RenderInput
 	if idx > 0 {
@@ -140,9 +143,52 @@ func renderItem(ctx context.Context, dc nykya.Config, is []*nykya.RenderInput, i
 	case "post":
 		return renderPost(ctx, dc, i, previous, next)
 	default:
-		return &RenderedItem{
-			Input:   i,
-			Content: template.HTML(i.Inline),
-		}, nil
+		return renderRaw(ctx, dc, i)
 	}
+}
+
+func renderRaw(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
+	ri, _, err := copyRawFile(ctx, dc, i)
+	return ri, err
+}
+
+func copyRawFile(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, bool, error) {
+	ri := &RenderedItem{
+		Input:   i,
+		URL:     filepath.ToSlash(i.ContentPath),
+		OutPath: i.ContentPath,
+	}
+
+	fullSrc := filepath.Join(dc.In, i.ContentPath)
+	fullDest := filepath.Join(dc.Out, i.ContentPath)
+
+	sst, err := os.Stat(fullSrc)
+	if err != nil {
+		return nil, false, err
+	}
+
+	dst, err := os.Stat(fullDest)
+	updated := false
+
+	if err != nil {
+		updated = true
+		klog.Infof("updating %s: does not exist", fullDest)
+	}
+
+	if err == nil && sst.Size() != dst.Size() {
+		updated = true
+		klog.Infof("updating %s: size mismatch", fullDest)
+	}
+
+	if err == nil && sst.ModTime().After(dst.ModTime()) {
+		klog.Infof("updating %s: source newer", fullDest)
+		updated = true
+	}
+
+	if updated {
+		klog.Infof("copying %s to %s ...", fullSrc, fullDest)
+		err = copy.Copy(fullSrc, fullDest)
+	}
+
+	return ri, updated, err
 }

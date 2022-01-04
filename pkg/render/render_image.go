@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
-	"github.com/otiai10/copy"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
 	"github.com/tstromberg/nykya/pkg/nykya"
@@ -41,48 +41,17 @@ var defaultThumbOpts = map[string]ThumbOpts{
 }
 
 func renderImage(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
-	ri := &RenderedItem{
-		Input:   i,
-		URL:     filepath.ToSlash(i.ContentPath),
-		OutPath: i.ContentPath,
-		Thumbs:  map[string]ThumbMeta{},
+	// renderRaw takes care of copying the original file over
+	ri, updated, err := copyRawFile(ctx, dc, i)
+	if err != nil {
+		return ri, err
 	}
+	ri.Thumbs = map[string]ThumbMeta{}
 
-	fullSrc := filepath.Join(dc.In, i.ContentPath)
 	fullDest := filepath.Join(dc.Out, i.ContentPath)
 
-	sst, err := os.Stat(fullSrc)
-	if err != nil {
-		return nil, err
-	}
-
-	dst, err := os.Stat(fullDest)
-	updated := false
-
-	if err != nil {
-		updated = true
-		klog.Infof("updating %s: does not exist", fullDest)
-	}
-
-	if err == nil && sst.Size() != dst.Size() {
-		updated = true
-		klog.Infof("updating %s: size mismatch", fullDest)
-	}
-
-	if err == nil && sst.ModTime().After(dst.ModTime()) {
-		klog.Infof("updating %s: source newer", fullDest)
-		updated = true
-	}
-
-	if updated {
-		err := copy.Copy(fullSrc, fullDest)
-		if err != nil {
-			return ri, err
-		}
-	}
-
 	thumbDir := filepath.Join(filepath.Dir(i.ContentPath), ".t")
-	if err := os.MkdirAll(filepath.Join(dc.Out, thumbDir), 0600); err != nil {
+	if err := os.MkdirAll(filepath.Join(dc.Out, thumbDir), 0o700); err != nil {
 		return ri, err
 	}
 
@@ -132,22 +101,28 @@ func createThumb(i image.Image, path string, t ThumbOpts) (*ThumbMeta, error) {
 	x := t.X
 	y := t.Y
 
+	if t.X == 0 && t.Y == 0 {
+		return nil, fmt.Errorf("both dimensions cannot be zero: %+v", t)
+	}
+
 	if t.X == 0 {
-		scale := i.Bounds().Dy() / t.Y
-		x = int(i.Bounds().Dx() / scale)
+		scale := math.Max(float64(i.Bounds().Dy()/t.Y), 1)
+		x = int(float64(i.Bounds().Dx()) / scale)
 	}
 
 	if t.Y == 0 {
-		scale := i.Bounds().Dx() / t.X
-		y = int(i.Bounds().Dy() / scale)
+		scale := math.Max(float64(i.Bounds().Dx()/t.X), 1)
+		y = int(float64(i.Bounds().Dy()) / scale)
 	}
 
+	klog.Infof("%+v resize result: x=%d y=%d", t, x, y)
 	rimg := transform.Resize(i, x, y, transform.Lanczos)
 	if err := imgio.Save(path, rimg, imgio.JPEGEncoder(t.Quality)); err != nil {
 		return nil, fmt.Errorf("save: %w", err)
 	}
 
-	return &ThumbMeta{X: rimg.Bounds().Dx(), Y: rimg.Bounds().Dy()}, nil
+	tm := &ThumbMeta{X: rimg.Bounds().Dx(), Y: rimg.Bounds().Dy()}
+	return tm, nil
 }
 
 func readThumb(path string) (*ThumbMeta, error) {
