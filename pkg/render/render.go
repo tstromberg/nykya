@@ -36,6 +36,12 @@ type RenderedItem struct {
 
 	Content template.HTML
 	Title   string
+
+	Previous    *nykya.RenderInput
+	PreviousURL string
+
+	Next    *nykya.RenderInput
+	NextURL string
 }
 
 func indexesForRenderInput(i *nykya.RenderInput) []string {
@@ -49,8 +55,14 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 	rs := []*RenderedItem{}
 	paths := []string{}
 
-	for _, i := range items {
-		ri, err := renderItem(ctx, dc, i)
+	sort.Slice(items, func(i, j int) bool {
+		ip := items[i].FrontMatter.Date.Time
+		jp := items[j].FrontMatter.Date.Time
+		return ip.Before(jp)
+	})
+
+	for x, i := range items {
+		ri, err := renderItem(ctx, dc, items, x)
 		if err != nil {
 			klog.Errorf("annotate(%+v): %v", i, err)
 			continue
@@ -58,12 +70,6 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 
 		rs = append(rs, ri)
 	}
-
-	sort.Slice(rs, func(i, j int) bool {
-		ip := rs[i].Input.FrontMatter.Date.Time
-		jp := rs[j].Input.FrontMatter.Date.Time
-		return ip.After(jp)
-	})
 
 	st := &Stream{
 		Title:       dc.Title,
@@ -115,13 +121,24 @@ func siteIndex(ctx context.Context, dc nykya.Config, st *Stream) (string, error)
 	return dst, siteTmpl("index", dc.Theme, dst, st)
 }
 
-func renderItem(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
+func renderItem(ctx context.Context, dc nykya.Config, is []*nykya.RenderInput, idx int) (*RenderedItem, error) {
+	i := is[idx]
 	klog.V(1).Infof("render: %s: %+v", i.ContentPath, i.FrontMatter)
+
+	var previous, next *nykya.RenderInput
+	if idx > 0 {
+		previous = is[idx-1]
+	}
+
+	if idx < len(is)-1 {
+		next = is[idx+1]
+	}
+
 	switch i.FrontMatter.Kind {
 	case "image":
 		return renderImage(ctx, dc, i)
 	case "post":
-		return renderPost(ctx, dc, i)
+		return renderPost(ctx, dc, i, previous, next)
 	default:
 		return &RenderedItem{
 			Input:   i,

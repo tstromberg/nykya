@@ -59,8 +59,8 @@ func fromMarkdown(path string) (*nykya.RenderInput, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal of %s: %w", b, err)
 	}
-	klog.V(1).Infof("front-matter date: %s", i.FrontMatter.Date)
 	i.Inline = string(after)
+
 	return i, nil
 }
 

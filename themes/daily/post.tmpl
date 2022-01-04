@@ -12,7 +12,16 @@
 
 <p><em>{{ .Input.FrontMatter.Date.Format "2006-01-02"}}</em></p>
 
-<p>{{ .Input.FrontMatter.Description }}</p>
-
 {{ .Content }}
+
+<footer class="prev_next">
+  {{ if .Previous }}
+  <div class="previous">&larr; <a href="{{ .PreviousURL }}">{{ .Previous.FrontMatter.Title }}</a></div>
+  {{ end }}
+
+  {{ if .Next }}
+  <div class="next"><a href="{{ .NextURL }}">{{ .Next.FrontMatter.Title }}</a> &rarr;</div>
+  {{ end }}
+</footer>
+
 {{ end }}

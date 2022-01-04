@@ -45,15 +45,39 @@ func markdownContent(in string) (string, error) {
 	return buf.String(), nil
 }
 
-func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput) (*RenderedItem, error) {
+func urlTo(i *nykya.RenderInput) string {
+	if i == nil {
+		return ""
+	}
+
+	ext := filepath.Ext(i.ContentPath)
+	return filepath.ToSlash(strings.Replace(i.ContentPath, ext, ".html", 1))
+}
+
+func relPath(i *nykya.RenderInput, k *nykya.RenderInput) string {
+	src := urlTo(i)
+	dest := urlTo(k)
+	rel, err := filepath.Rel(src, dest)
+	if err != nil {
+		return fmt.Sprintf("error.%v", err)
+	}
+	// lame
+	return filepath.Base(rel)
+}
+
+func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput, previous *nykya.RenderInput, next *nykya.RenderInput) (*RenderedItem, error) {
 	ext := filepath.Ext(i.ContentPath)
 	outPath := strings.Replace(i.ContentPath, ext, ".html", 1)
 
 	ri := &RenderedItem{
-		Title:   i.FrontMatter.Title,
-		Input:   i,
-		URL:     filepath.ToSlash(outPath),
-		OutPath: outPath,
+		Title:       i.FrontMatter.Title,
+		Input:       i,
+		URL:         urlTo(i),
+		OutPath:     outPath,
+		Next:        next,
+		Previous:    previous,
+		PreviousURL: relPath(i, previous),
+		NextURL:     relPath(i, next),
 	}
 
 	var err error
