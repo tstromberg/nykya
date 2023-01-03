@@ -11,6 +11,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/tstromberg/nykya/pkg/nykya"
+	"k8s.io/klog/v2"
 )
 
 func editorCmd(ctx context.Context, dc nykya.Config, goos string, path string) *exec.Cmd {
@@ -21,7 +22,11 @@ func editorCmd(ctx context.Context, dc nykya.Config, goos string, path string) *
 	if editor == "" {
 		editor = "vi"
 	}
-	return exec.Command(editor, path)
+	c := exec.Command(editor, path)
+	c.Stdout = os.Stdout
+	c.Stdin = os.Stdin
+	c.Stderr = os.Stderr
+	return c
 }
 
 func openEditor(ctx context.Context, dc nykya.Config, i nykya.RenderInput) (nykya.RenderInput, error) {
@@ -38,9 +43,10 @@ func openEditor(ctx context.Context, dc nykya.Config, i nykya.RenderInput) (nyky
 	tf.Close()
 
 	c := editorCmd(ctx, dc, runtime.GOOS, tf.Name())
-	out, err := c.CombinedOutput()
-	if err != nil {
-		return ni, fmt.Errorf("run %v: %w\n%s", c.Args, err, out)
+	klog.Infof("invoking editor: %v", c.Args)
+
+	if err := c.Run(); err != nil {
+		return ni, fmt.Errorf("run %v: %w", c.Args, err)
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -50,5 +56,8 @@ func openEditor(ctx context.Context, dc nykya.Config, i nykya.RenderInput) (nyky
 	}
 
 	fm, err := fromMarkdown(tf.Name())
+	if err != nil {
+		return nykya.RenderInput{}, err
+	}
 	return *fm, err
 }

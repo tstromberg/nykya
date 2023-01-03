@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"flag"
 
@@ -16,7 +15,7 @@ type Globals struct {
 // CLI defines the subcommands and flags supported
 type CLI struct {
 	Globals
-	Add    addCmd    `cmd:"" help:"Add content"`
+	Post   postCmd   `cmd:"" help:"Create a post"`
 	Render renderCmd `cmd:"" help:"Render output to a static directory"`
 	Dev    devCmd    `cmd:"" help:"Developer mode: local webserver with instant rendering"`
 	Init   initCmd   `cmd:"" help:"Initialize a site directory"`

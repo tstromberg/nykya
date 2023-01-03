@@ -34,5 +34,5 @@ func renderIndex(ctx context.Context, dc nykya.Config, rs []*RenderedItem, outPa
 		OutPath:   outPath,
 	}
 
-	return siteTmpl("index", dc.Theme, filepath.Join(dc.Out, outPath), st)
+	return siteTmpl("index", dc, filepath.Join(dc.Out, outPath), st)
 }

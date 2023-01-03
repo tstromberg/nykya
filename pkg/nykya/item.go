@@ -1,7 +1,11 @@
 package nykya
 
 import (
+	"fmt"
+	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // YAMLTime is time serializable to frontmatter
@@ -17,14 +21,15 @@ func (yt *YAMLTime) MarshalYAML() (interface{}, error) {
 }
 
 // UnmarshalYAML unmarshals RFC1123 or Y-M-D timestamps to time.Time
-func (yt *YAMLTime) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (yt *YAMLTime) UnmarshalYAML(v *yaml.Node) error {
 	var s string
-	err := unmarshal(&s)
-	if err != nil {
-		return err
+	if err := v.Decode(&s); err != nil {
+		return fmt.Errorf("node decode: %w", err)
 	}
 
-	tp, err := time.Parse(ymdFormat, s)
+	// Strip garbage time text
+	b, _, _ := strings.Cut(s, "T")
+	tp, err := time.Parse(ymdFormat, b)
 	yt.Time = tp
 	return err
 }

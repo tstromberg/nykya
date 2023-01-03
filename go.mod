@@ -21,6 +21,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/tstromberg/wotd v0.0.0-20211229225551-4e07d81a680e // indirect
 	golang.org/x/image v0.0.0-20190703141733-d6a02ce849c9 // indirect
 	golang.org/x/net v0.0.0-20210916014120-12bc252f5db8 // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect

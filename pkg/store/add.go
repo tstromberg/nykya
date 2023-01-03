@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
 	"k8s.io/klog/v2"
 
 	"github.com/tstromberg/nykya/pkg/nykya"
+	"github.com/tstromberg/wotd/pkg/wotd"
 )
 
 // AddOptions are options that can be passed to the add command
@@ -69,7 +71,6 @@ func saveItem(ctx context.Context, dc nykya.Config, i nykya.RenderInput, path st
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
-
 	switch i.Format {
 	case nykya.Markdown:
 		return saveMarkdown(path, fm, i.Inline)
@@ -82,8 +83,46 @@ func saveItem(ctx context.Context, dc nykya.Config, i nykya.RenderInput, path st
 	}
 }
 
+func wordOfTheDay() (string, error) {
+	rs, err := wotd.All(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	var sb strings.Builder
+
+	sb.WriteString("\n# words of the day\n#\n")
+
+	for _, r := range rs {
+		sb.WriteString(fmt.Sprintf("# %s —  %s\n", r.Word, r.URL))
+		for _, d := range r.Definitions {
+			for _, ps := range d.Parts {
+				sb.WriteString(fmt.Sprintf("#    %-9.9s: %s\n", ps.Kind, ps.Text))
+			}
+			break
+		}
+
+		sb.WriteString("\n")
+	}
+
+	return sb.String(), nil
+}
+
 func saveMarkdown(path string, fm []byte, content string) error {
+	klog.Infof("saving markdown to %s ...", path)
 	b := bytes.NewBuffer(fm)
+
+	if len(content) == 0 {
+		wotd, err := wordOfTheDay()
+		if err != nil {
+			klog.Errorf("wotd failure: %v", err)
+		}
+
+		_, err = b.WriteString(wotd)
+		if err != nil {
+			klog.Errorf("wotd append failed: %v", err)
+		}
+	}
 
 	_, err := b.WriteString(nykya.MarkdownSeparator)
 	if err != nil {
@@ -99,6 +138,7 @@ func saveMarkdown(path string, fm []byte, content string) error {
 }
 
 func saveHTML(path string, fm []byte, content string) error {
+	klog.Infof("saving HTML to %s ...", path)
 	b := bytes.NewBuffer([]byte(nykya.HTMLBegin))
 
 	_, err := b.Write(fm)

@@ -6,12 +6,18 @@ import (
 	"fmt"
 	"html/template"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/tstromberg/nykya/pkg/nykya"
 	"github.com/yuin/goldmark"
 	"k8s.io/klog/v2"
+)
+
+var (
+	BareImgRe    = regexp.MustCompile(`\[img \"(.*?)\"\]`)
+	CaptionImgRe = regexp.MustCompile(`\[img \"(.*?)\" \"(.*?)\"\]`)
 )
 
 func htmlContent(in string) (string, error) {
@@ -42,7 +48,11 @@ func markdownContent(in string) (string, error) {
 	if err := goldmark.Convert([]byte(in), &buf); err != nil {
 		return "", fmt.Errorf("goldmark: %w", err)
 	}
-	return buf.String(), nil
+
+	s := buf.String()
+	s = BareImgRe.ReplaceAllString(s, `<figure><img src="$1"></figure>`)
+	s = CaptionImgRe.ReplaceAllString(s, `<figure><img src="$1" alt="$2"><figcaption>$2</figcaption></figure>`)
+	return s, nil
 }
 
 func urlTo(i *nykya.RenderInput) string {
@@ -51,7 +61,10 @@ func urlTo(i *nykya.RenderInput) string {
 	}
 
 	ext := filepath.Ext(i.ContentPath)
-	return filepath.ToSlash(strings.Replace(i.ContentPath, ext, ".html", 1))
+	url := filepath.ToSlash(strings.Replace(i.ContentPath, ext, ".html", 1))
+	url = strings.Replace(url, "/post.html", ".html", 1)
+	url = strings.Replace(url, "/index.html", ".html", 1)
+	return url
 }
 
 func relPath(i *nykya.RenderInput, k *nykya.RenderInput) string {
@@ -67,7 +80,10 @@ func relPath(i *nykya.RenderInput, k *nykya.RenderInput) string {
 
 func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput, previous *nykya.RenderInput, next *nykya.RenderInput) (*RenderedItem, error) {
 	ext := filepath.Ext(i.ContentPath)
+
 	outPath := strings.Replace(i.ContentPath, ext, ".html", 1)
+	outPath = strings.Replace(outPath, "/post.html", ".html", 1)
+	outPath = strings.Replace(outPath, "/index.html", ".html", 1)
 
 	ri := &RenderedItem{
 		PageTitle:   i.FrontMatter.Title,
@@ -99,5 +115,5 @@ func renderPost(ctx context.Context, dc nykya.Config, i *nykya.RenderInput, prev
 	ri.Content = template.HTML(content)
 
 	klog.V(1).Infof("%s content: %s", ri.PageTitle, content)
-	return ri, siteTmpl("post", dc.Theme, filepath.Join(dc.Out, outPath), ri)
+	return ri, siteTmpl("post", dc, filepath.Join(dc.Out, outPath), ri)
 }

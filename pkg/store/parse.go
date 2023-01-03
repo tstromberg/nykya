@@ -197,7 +197,7 @@ func fromDirectory(path string, root string) ([]*nykya.RenderInput, error) {
 		i, err := fromFile(fp, rel)
 		// Mostly harmless
 		if err != nil {
-			klog.Errorf("fromFile failed on %q: %w", fp, err)
+			klog.Errorf("fromFile failed on %q: %v", fp, err)
 			continue
 		}
 

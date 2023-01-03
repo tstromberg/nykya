@@ -47,16 +47,18 @@
 
 
 {{ define "header" }}
-<div id="profile-container"><img id="profile" src="../profile.jpg" width="48" alt="photo of thomas str&uoml;berg"></div>
-<div id="name">{{ .SiteTitle }}</a>
-</div>
+<a href="/">
+  <div id="profile-container"><img id="profile" src="{{ RootRel "profile.jpg" }} width="48" alt="photo of thomas str&uoml;berg">
+  </div>
+  <div id="name">{{ .SiteTitle }}</div>
+</a>
 
 <div class="right">
-  <div id="blog" class="menuitem"><a href="https://dev.to/tstromberg">blog</a></div>
+  <div id="blog" class="menuitem"><a href="/t/posts">blog</a></div>
   <div id="github" class="menuitem"><a href="https://github.com/tstromberg">github</a></div>
   <div id="twitter" class="menuitem"><a href="https://twitter.com/thomrstrom">twitter</a></div>
-  <div id="resume" class="menuitem"><a href="photos/">photos</a></div>
-  <div id="resume" class="menuitem"><a href="resume/ts.html">resume</a></div>
+  <div id="resume" class="menuitem"><a href="/t/photos/">photos</a></div>
+  <div id="resume" class="menuitem"><a href="/t/resume/ts.html">resume</a></div>
   <div id="contact" class="menuitem"><a href="javascript:dece('dEBzdHJvbWJlcmcub3Jn');">email</a></div>
   <script>
     function dece(encoded) {

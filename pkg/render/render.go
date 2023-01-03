@@ -35,12 +35,29 @@ type RenderedItem struct {
 	NextURL string
 }
 
-func indexesForRender(i *RenderedItem) []string {
-	return []string{filepath.Dir(i.OutPath)}
+func indexesForRelPath(relPath string) []string {
+	paths := []string{}
+
+	dirs := strings.Split(filepath.Dir(relPath), string(filepath.Separator))
+	for i := range dirs {
+		paths = append(paths, strings.Join(dirs[0:i+1], string(filepath.Separator)))
+	}
+
+	klog.Infof("indexes for %s: %v (dirs=%v)", relPath, paths, dirs)
+	return paths
 }
 
 // Site generates static output to the site output directory
-func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]string, error) {
+func Site(ctx context.Context, dc nykya.Config, unfiltered []*nykya.RenderInput) ([]string, error) {
+	items := []*nykya.RenderInput{}
+	for _, i := range unfiltered {
+		if i.FrontMatter.Draft && !dc.IncludeDrafts {
+			klog.Infof("Ignoring draft: %s", i.FrontMatter.Title)
+			continue
+		}
+		items = append(items, i)
+	}
+
 	rs := []*RenderedItem{}
 	paths := []string{}
 
@@ -66,7 +83,7 @@ func Site(ctx context.Context, dc nykya.Config, items []*nykya.RenderInput) ([]s
 		paths = append(paths, ri.OutPath)
 
 		if ri.PageTitle != "" {
-			for _, i := range indexesForRender(ri) {
+			for _, i := range indexesForRelPath(ri.OutPath) {
 				if byIndex[i] == nil {
 					byIndex[i] = []*RenderedItem{}
 				}
@@ -96,14 +113,13 @@ func tmplRelPath(root string, path string) string {
 		return path
 	}
 
-	// If we're in the same directory, don't go up
-	r = strings.TrimPrefix(r, "../")
 	klog.Infof("relpath of root=%s path=%s: %s", root, path, r)
 	return r
 }
 
-func siteTmpl(name string, themeRoot string, dst string, data interface{}) error {
+func siteTmpl(name string, dc nykya.Config, dst string, data interface{}) error {
 	klog.Infof("Rendering %s to %s ...", name, dst)
+	themeRoot := dc.Theme
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
@@ -125,6 +141,9 @@ func siteTmpl(name string, themeRoot string, dst string, data interface{}) error
 
 	fm := template.FuncMap{
 		"RelPath": tmplRelPath,
+		"RootRel": func(s string) string {
+			return tmplRelPath(dst, filepath.Join(dc.Out, s))
+		},
 	}
 
 	t := template.Must(template.New(fmt.Sprintf("%s.tmpl", name)).Funcs(fm).ParseFiles(paths...))

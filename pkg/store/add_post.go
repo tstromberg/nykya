@@ -12,8 +12,9 @@ import (
 func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 	i := nykya.RenderInput{
 		FrontMatter: nykya.FrontMatter{
-			Kind: opts.Kind,
-			Date: nykya.NewYAMLTime(opts.Timestamp),
+			Kind:  opts.Kind,
+			Date:  nykya.NewYAMLTime(opts.Timestamp),
+			Title: opts.Title,
 		},
 		Format: opts.Format,
 	}
@@ -35,7 +36,7 @@ func addPost(ctx context.Context, dc nykya.Config, opts AddOptions) error {
 			return fmt.Errorf("calculate hierarchy: %w", err)
 		}
 
-		outPath = filepath.Join(relDir, fmt.Sprintf("%s.md", slugify(i.FrontMatter.Title)))
+		outPath = filepath.Join(relDir, slugify(i.FrontMatter.Title), "post.md")
 	} else {
 		i.FrontMatter.Origin = opts.Content
 		outPath, err = localPath(dc, i.FrontMatter)
